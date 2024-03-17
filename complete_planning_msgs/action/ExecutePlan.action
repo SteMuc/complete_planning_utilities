@@ -1,0 +1,6 @@
+string move_group_name
+moveit_msgs/RobotTrajectory motion_plan
+---
+# Define your custom action feedback (if needed)
+---
+# Define your custom action result (if needed)

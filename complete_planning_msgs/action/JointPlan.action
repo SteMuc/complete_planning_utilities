@@ -1,0 +1,11 @@
+# goal
+float64[] goal_configuration
+float64[] initial_configuration
+string planning_group
+---
+#result
+moveit_msgs/RobotTrajectory planned_trajectory
+bool success
+---
+#feedback
+float64 percentage
