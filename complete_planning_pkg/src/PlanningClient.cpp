@@ -42,10 +42,10 @@ int main(int argc, char **argv)
     GoalHandle goal_handle1 = cartesian_plan_client.sendGoal(goal_pose, initial_configuration, planning_group);
     //                           // Spin to keep the node alive
     cartesian_plan_client._goalHandles[1] = &goal_handle1;
-    auto pippo = cartesian_plan_client._goalHandles[1]->getResult();
-    if(pippo){
-        ROS_INFO("FINITO!!!");
+    while(cartesian_plan_client._goalHandles[1]->getCommState().toString() != "DONE"){
+          ROS_INFO("Not finished yet");
     }
+    ROS_INFO("DONE: Before ros::waitForShutDown");
     ros::waitForShutdown(); 
 
     return 0;

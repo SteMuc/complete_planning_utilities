@@ -1,11 +1,11 @@
 /**
- * @file ActionServer.h
- * @brief Header file for various ROS action servers.
+ * @file CartesianPlan.h
+ * @brief Header file for various ROS Cartesian action server.
  * @author Alessandro Palleschi, Stefano Angeli
  */
 
-#ifndef ACTIONSERVER_H
-#define ACTIONSERVER_H
+#ifndef CARTESIANSERVER_H
+#define CARTESIANSERVER_H
 
 #include <ros/ros.h>
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -20,28 +20,28 @@
 #include <complete_planning_msgs/CartesianPlanFeedback.h>
 
 // Joint plan Action headers
-#include <complete_planning_msgs/JointPlanAction.h>
-#include <complete_planning_msgs/JointPlanGoal.h>
-#include <complete_planning_msgs/JointPlanResult.h>
-#include <complete_planning_msgs/JointPlanFeedback.h>
+// #include <complete_planning_msgs/JointPlanAction.h>
+// #include <complete_planning_msgs/JointPlanGoal.h>
+// #include <complete_planning_msgs/JointPlanResult.h>
+// #include <complete_planning_msgs/JointPlanFeedback.h>
 
-// Grasp action headers
-#include <complete_planning_msgs/GraspAction.h>
-#include <complete_planning_msgs/GraspGoal.h>
-#include <complete_planning_msgs/GraspResult.h>
-#include <complete_planning_msgs/GraspFeedback.h>
+// // Grasp action headers
+// #include <complete_planning_msgs/GraspAction.h>
+// #include <complete_planning_msgs/GraspGoal.h>
+// #include <complete_planning_msgs/GraspResult.h>
+// #include <complete_planning_msgs/GraspFeedback.h>
 
-// Release Action headers
-#include <complete_planning_msgs/ReleaseAction.h>
-#include <complete_planning_msgs/ReleaseGoal.h>
-#include <complete_planning_msgs/ReleaseResult.h>
-#include <complete_planning_msgs/ReleaseFeedback.h>
+// // Release Action headers
+// #include <complete_planning_msgs/ReleaseAction.h>
+// #include <complete_planning_msgs/ReleaseGoal.h>
+// #include <complete_planning_msgs/ReleaseResult.h>
+// #include <complete_planning_msgs/ReleaseFeedback.h>
 
-// Execute Plan Action headers
-#include <complete_planning_msgs/ExecutePlanAction.h>
-#include <complete_planning_msgs/ExecutePlanGoal.h>
-#include <complete_planning_msgs/ExecutePlanResult.h>
-#include <complete_planning_msgs/ExecutePlanFeedback.h>
+// // Execute Plan Action headers
+// #include <complete_planning_msgs/ExecutePlanAction.h>
+// #include <complete_planning_msgs/ExecutePlanGoal.h>
+// #include <complete_planning_msgs/ExecutePlanResult.h>
+// #include <complete_planning_msgs/ExecutePlanFeedback.h>
 
 #include <Eigen/Dense>
 
@@ -107,4 +107,4 @@ public:
     bool isPoseFilled(const geometry_msgs::Pose& pose);
 };
 
-#endif // ACTIONSERVER_H
+#endif // CARTESIANSERVER_H
