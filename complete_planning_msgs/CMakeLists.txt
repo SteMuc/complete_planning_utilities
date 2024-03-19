@@ -73,6 +73,7 @@ add_action_files(
   Grasp.action
   Release.action
   ExecutePlan.action
+  SlerpPlan.action
 )
 
 ## Generate added messages and services with any dependencies listed here

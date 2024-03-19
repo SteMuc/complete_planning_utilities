@@ -12,6 +12,8 @@
 
 #include <complete_planning_pkg/JointPlan.h>
 
+namespace JointPlan{
+
 void JointPlanActionServer::onGoal(GoalHandle gh)
 {
     ROS_INFO("Received new Joint Goal!");
@@ -109,3 +111,4 @@ void JointPlanActionServer::onCancel(GoalHandle gh)
         _cancelGoals[gh.getGoalID().id] = true;
     }
 };
+}

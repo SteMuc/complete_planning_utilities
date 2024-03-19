@@ -8,6 +8,7 @@
 
 #include <ros/ros.h>
 #include "complete_planning_pkg/CartesianPlan.h"
+#include "complete_planning_pkg/JointPlan.h"
 
 int main(int argc, char **argv)
 {
@@ -18,7 +19,8 @@ int main(int argc, char **argv)
     spinner.start();
 
     // Create instances of your action server classes
-    CartesianPlanActionServer cartesian_server(nh, "cartesian_plan_action");
+    CartesianPlan::CartesianPlanActionServer cartesian_server(nh, "cartesian_plan_action");
+    JointPlan::JointPlanActionServer joint_server(nh, "joint_plan_action");
 
     ros::waitForShutdown();
     return 0;

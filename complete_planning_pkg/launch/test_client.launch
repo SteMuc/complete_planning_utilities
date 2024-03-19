@@ -1,0 +1,9 @@
+<!-- joint_plan_client.launch -->
+
+<launch>
+    <!-- Load parameters from the YAML file -->
+    <rosparam file="$(find complete_planning_pkg)/config/joint_plan.yaml" command="load"/>
+  
+    <!-- Launch the client node -->
+    <node name="joint_plan_client_node" pkg="complete_planning_pkg" type="planning_client" output="screen"/>
+  </launch>
