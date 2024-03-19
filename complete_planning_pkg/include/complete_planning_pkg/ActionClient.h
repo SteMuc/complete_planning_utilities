@@ -12,6 +12,11 @@
 #include <complete_planning_msgs/JointPlanAction.h>
 #include <complete_planning_msgs/JointPlanGoal.h>
 
+
+// Slerp plan Action headers
+#include <complete_planning_msgs/SlerpPlanAction.h>
+#include <complete_planning_msgs/SlerpPlanGoal.h>
+
 // Grasp action headers
 #include <complete_planning_msgs/GraspAction.h>
 #include <complete_planning_msgs/GraspGoal.h>

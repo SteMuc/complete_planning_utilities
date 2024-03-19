@@ -1,0 +1,6 @@
+
+slerp_test_client:
+  goal_configuration: [0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+  initial_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  initial_configuration: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  planning_group: "panda_arm"

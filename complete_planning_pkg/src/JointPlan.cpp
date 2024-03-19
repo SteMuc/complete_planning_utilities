@@ -12,103 +12,105 @@
 
 #include <complete_planning_pkg/JointPlan.h>
 
-namespace JointPlan{
-
-void JointPlanActionServer::onGoal(GoalHandle gh)
+namespace JointPlan
 {
-    ROS_INFO("Received new Joint Goal!");
-    _cancelGoals[gh.getGoalID().id] = false;
 
-    boost::shared_ptr<const complete_planning_msgs::JointPlanGoal> goal = gh.getGoal();
-    std::string goal_id = gh.getGoalID().id;
-
-    // Initialize Joint Goal
-    this->goal_configuration = goal->goal_configuration;
-    this->initial_configuration = goal->initial_configuration;
-    this->planning_group = goal->planning_group;
-
-    // Initialize the MoveGroupInterface and joint model group
-    moveit::planning_interface::MoveGroupInterface group(this->planning_group);
-    const robot_state::JointModelGroup *joint_model_group =
-        group.getCurrentState()->getJointModelGroup(this->planning_group);
-    auto joint_names = group.getVariableNames();
-
-    if (joint_names.size() == this->goal_configuration.size())
+    void JointPlanActionServer::onGoal(GoalHandle gh)
     {
-        group.setJointValueTarget(this->goal_configuration);
-        ROS_INFO("Goal Accepted!");
-        gh.setAccepted();
-    }
-    else
-    {
-        ROS_ERROR("WRONG SIZE: the number of joints in the goal is %zu, while it should be %zu", this->goal_configuration.size(), joint_names.size());
-        gh.setRejected();
-        _cancelGoals.erase(goal_id);
-        return;
-    }
+        ROS_INFO("Received new Joint Goal!");
+        _cancelGoals[gh.getGoalID().id] = false;
 
-    // Create a start state from the initial configuration if provided
-    if (!this->isNullPose(this->initial_configuration))
-    {
-        ROS_INFO("Setting Initial Position");
-        if (joint_names.size() == this->initial_configuration.size())
+        boost::shared_ptr<const complete_planning_msgs::JointPlanGoal> goal = gh.getGoal();
+        std::string goal_id = gh.getGoalID().id;
+
+        // Initialize Joint Goal
+        this->goal_configuration = goal->goal_configuration;
+        this->initial_configuration = goal->initial_configuration;
+        this->planning_group = goal->planning_group;
+
+        // Initialize the MoveGroupInterface and joint model group
+        moveit::planning_interface::MoveGroupInterface group(this->planning_group);
+        const robot_state::JointModelGroup *joint_model_group =
+            group.getCurrentState()->getJointModelGroup(this->planning_group);
+        auto joint_names = group.getVariableNames();
+
+        if (joint_names.size() == this->goal_configuration.size())
         {
-            moveit::core::RobotStatePtr current_state = group.getCurrentState();
-            current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
-            group.setStartState(*current_state);
+            group.setJointValueTarget(this->goal_configuration);
+            ROS_INFO("Goal Accepted!");
+            gh.setAccepted();
         }
         else
         {
-            ROS_ERROR("WRONG SIZE: the number of joints in the goal is %zu, while it should be %zu", this->initial_configuration.size(), joint_names.size());
-            gh.setAborted();
+            ROS_ERROR("WRONG SIZE: the number of joints in the goal is %zu, while it should be %zu", this->goal_configuration.size(), joint_names.size());
+            gh.setRejected();
             _cancelGoals.erase(goal_id);
             return;
         }
-    }
-    else
-    {
-        // If initial_pose is null, set the start state to the current state
-        ROS_INFO("No intial position specified, using the current state");
-        moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        group.setStartState(*current_state); // Use current_state here
-    }
 
-    if (_cancelGoals[goal_id])
-    {
-        ROS_INFO("Canceled the goal.");
-        gh.setCanceled();
-        _cancelGoals.erase(goal_id);
-        return;
-    }
-    
-    complete_planning_msgs::JointPlanResult result;
+        // Create a start state from the initial configuration if provided
+        if (!this->isNullPose(this->initial_configuration))
+        {
+            ROS_INFO("Setting Initial Position");
+            if (joint_names.size() == this->initial_configuration.size())
+            {
+                moveit::core::RobotStatePtr current_state = group.getCurrentState();
+                current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
+                group.setStartState(*current_state);
+            }
+            else
+            {
+                ROS_ERROR("WRONG SIZE: the number of joints in the goal is %zu, while it should be %zu", this->initial_configuration.size(), joint_names.size());
+                gh.setAborted();
+                _cancelGoals.erase(goal_id);
+                return;
+            }
+        }
+        else
+        {
+            // If initial_pose is null, set the start state to the current state
+            ROS_INFO("No intial position specified, using the current state");
+            moveit::core::RobotStatePtr current_state = group.getCurrentState();
+            group.setStartState(*current_state); // Use current_state here
+        }
 
-    // Plan the trajectory
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    moveit::core::MoveItErrorCode planning_result = group.plan(plan);
-    
-    if(planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS){
-        result.planned_trajectory = plan.trajectory_;
-        gh.setSucceeded(result);
-        ROS_INFO("Set Succeeded");
-        _cancelGoals.erase(goal_id);
-    }
-    else
-    {
-        gh.setAborted(result);
-        ROS_ERROR("Planning failed with error code: %d", planning_result.val);
-        _cancelGoals.erase(goal_id);
-        return;
-    }
-};
+        if (_cancelGoals[goal_id])
+        {
+            ROS_INFO("Canceled the goal.");
+            gh.setCanceled();
+            _cancelGoals.erase(goal_id);
+            return;
+        }
 
-void JointPlanActionServer::onCancel(GoalHandle gh)
-{
-    ROS_INFO("Cancel request has been received.");
-    if (_cancelGoals.count(gh.getGoalID().id) > 0)
+        complete_planning_msgs::JointPlanResult result;
+
+        // Plan the trajectory
+        moveit::planning_interface::MoveGroupInterface::Plan plan;
+        moveit::core::MoveItErrorCode planning_result = group.plan(plan);
+
+        if (planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS)
+        {
+            result.planned_trajectory = plan.trajectory_;
+            gh.setSucceeded(result);
+            ROS_INFO("Set Succeeded");
+            _cancelGoals.erase(goal_id);
+        }
+        else
+        {
+            gh.setAborted(result);
+            ROS_ERROR("Planning failed with error code: %d", planning_result.val);
+            _cancelGoals.erase(goal_id);
+            return;
+        }
+    };
+
+    void JointPlanActionServer::onCancel(GoalHandle gh)
     {
-        ROS_INFO("Found goal to cancel");
-        _cancelGoals[gh.getGoalID().id] = true;
-    }
-};
+        ROS_INFO("Cancel request has been received.");
+        if (_cancelGoals.count(gh.getGoalID().id) > 0)
+        {
+            ROS_INFO("Found goal to cancel");
+            _cancelGoals[gh.getGoalID().id] = true;
+        }
+    };
 }

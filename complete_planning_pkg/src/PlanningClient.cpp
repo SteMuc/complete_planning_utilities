@@ -49,48 +49,77 @@ int main(int argc, char **argv)
     // // }
     // Create an Action client for the JointPlan action server
     actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction> joint_plan_client("joint_plan_action", true);
+    actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction> slerp_plan_client("slerp_plan_action", true);
 
     // Wait for the action server to start
     ROS_INFO("Waiting for JointPlan action server to start...");
     joint_plan_client.waitForServer();
+    ROS_INFO("Waiting for SlerpPlan action server to start...");
+    slerp_plan_client.waitForServer();
 
     // Create a goal to send to the action server
     complete_planning_msgs::JointPlanGoal goal;
+    complete_planning_msgs::SlerpPlanGoal slerp_goal;
     // Load goal configuration from the parameter server
-    if (!ros::param::get("/joint_test_client/goal_configuration", goal.goal_configuration))
+    std::vector<double> goal_pose_vec;
+    if (!ros::param::get("/slerp_test_client/goal_configuration", goal_pose_vec))
     {
         ROS_ERROR("Failed to load goal_configuration parameter.");
         return 1;
     }
+    slerp_goal.goal_pose.position.x = goal_pose_vec.at(0);
+    slerp_goal.goal_pose.position.y = goal_pose_vec.at(1);
+    slerp_goal.goal_pose.position.z = goal_pose_vec.at(2);
+
+    slerp_goal.goal_pose.orientation.x = goal_pose_vec.at(3);
+    slerp_goal.goal_pose.orientation.y = goal_pose_vec.at(4);
+    slerp_goal.goal_pose.orientation.z = goal_pose_vec.at(5);
+    slerp_goal.goal_pose.orientation.w = goal_pose_vec.at(6);
 
     // Load initial configuration from the parameter server
-    if (!ros::param::get("/joint_test_client/initial_configuration", goal.initial_configuration))
+    if (!ros::param::get("/slerp_test_client/initial_configuration", slerp_goal.initial_configuration))
     {
         ROS_ERROR("Failed to load initial_configuration parameter.");
         return 1;
     }
 
     // Load planning group from the parameter server
-    if (!ros::param::get("/joint_test_client/planning_group", goal.planning_group))
+    if (!ros::param::get("/slerp_test_client/planning_group", slerp_goal.planning_group))
     {
         ROS_ERROR("Failed to load planning_group parameter.");
         return 1;
     }
+    std::vector<double> initial_pose_vec;
+    if (!ros::param::get("/slerp_test_client/initial_pose", initial_pose_vec))
+    {
+        ROS_ERROR("Failed to load goal_configuration parameter.");
+        return 1;
+    }
+
+    slerp_goal.initial_pose.position.x = initial_pose_vec.at(0);
+    slerp_goal.initial_pose.position.y = initial_pose_vec.at(1);
+    slerp_goal.initial_pose.position.z = initial_pose_vec.at(2);
+
+    slerp_goal.initial_pose.orientation.x = initial_pose_vec.at(3);
+    slerp_goal.initial_pose.orientation.y = initial_pose_vec.at(4);
+    slerp_goal.initial_pose.orientation.z = initial_pose_vec.at(5);
+    slerp_goal.initial_pose.orientation.w = initial_pose_vec.at(6);
+
     // Send the goal to the action server
-    ROS_INFO("Sending goal to JointPlan action server...");
-    joint_plan_client.sendGoal(goal);
+    ROS_INFO("Sending goal to SlerpPlan action server...");
+    slerp_plan_client.sendGoal(slerp_goal);
 
     // Wait for the action to complete (you can add a timeout here)
     bool finished_before_timeout = joint_plan_client.waitForResult();
 
     if (finished_before_timeout)
     {
-        actionlib::SimpleClientGoalState state = joint_plan_client.getState();
-        ROS_INFO("JointPlan action finished: %s", state.toString().c_str());
+        actionlib::SimpleClientGoalState state = slerp_plan_client.getState();
+        ROS_INFO("SlerpPlan action finished: %s", state.toString().c_str());
     }
     else
     {
-        ROS_ERROR("JointPlan action did not complete before the timeout.");
+        ROS_ERROR("SlerpPlan action did not complete before the timeout.");
     }
     ros::waitForShutdown();
 
