@@ -1,6 +1,5 @@
 # goal
 geometry_msgs/Pose goal_pose
-geometry_msgs/Pose initial_pose
 float64[] initial_configuration
 string planning_group
 int32 number_of_waypoints

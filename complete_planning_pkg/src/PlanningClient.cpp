@@ -95,24 +95,8 @@ int main(int argc, char **argv)
         ROS_ERROR("Failed to load planning_group parameter.");
         return 1;
     }
-    std::vector<double> initial_pose_vec;
-    if (!ros::param::get("/slerp_test_client/initial_pose", initial_pose_vec))
-    {
-        ROS_ERROR("Failed to load goal_configuration parameter.");
-        return 1;
-    }
-
-    slerp_goal.initial_pose.position.x = initial_pose_vec.at(0);
-    slerp_goal.initial_pose.position.y = initial_pose_vec.at(1);
-    slerp_goal.initial_pose.position.z = initial_pose_vec.at(2);
-
-    slerp_goal.initial_pose.orientation.x = initial_pose_vec.at(3);
-    slerp_goal.initial_pose.orientation.y = initial_pose_vec.at(4);
-    slerp_goal.initial_pose.orientation.z = initial_pose_vec.at(5);
-    slerp_goal.initial_pose.orientation.w = initial_pose_vec.at(6);
 
     std_msgs::Int32 n_wps;
-
     if (!ros::param::get("/slerp_test_client/number_of_waypoints", n_wps.data))
     {
         ROS_ERROR("Failed to load nwps parameter.");

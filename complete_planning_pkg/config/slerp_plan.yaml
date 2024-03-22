@@ -1,6 +1,5 @@
 slerp_test_client:
   goal_configuration: [0.607, -0.000, 0.690, 0.924, -0.383, 0.000, 0.000]
-  initial_pose: [0, 0, 0, 0, 0, 0, 1]
-  initial_configuration: []
+  initial_configuration: [0.15752737385022747, -1.1915182161220224, 0.35443435639060544, -2.459975216031288, 0.34045858802811146, 1.306474051890808, 1.1714887740111666]
   number_of_waypoints: 20
   planning_group: "panda_arm"

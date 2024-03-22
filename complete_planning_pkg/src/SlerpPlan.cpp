@@ -23,7 +23,6 @@ namespace SlerpPlan
         std::string goal_id = gh.getGoalID().id;
 
         // Initialize Cartesian goal
-        this->initial_pose = goal->initial_pose;
         this->goal_pose = goal->goal_pose;
         this->planning_group = goal->planning_group;
         this->initial_configuration = goal->initial_configuration;
@@ -56,132 +55,64 @@ namespace SlerpPlan
         // Initialize the MoveGroupInterface
         moveit::planning_interface::MoveGroupInterface group(this->planning_group);
 
-        // Getting the current ee transform
-        try
-        {
-            this->tf_listener.waitForTransform("/world", group.getEndEffectorLink(), ros::Time(0), ros::Duration(10.0));
-            this->tf_listener.lookupTransform("/world", group.getEndEffectorLink(), ros::Time(0), this->stamp_ee_transform);
-        }
-        catch (tf::TransformException ex)
-        {
-            ROS_ERROR("%s", ex.what());
-            ros::Duration(1.0).sleep();
-            return;
-        }
-
-        tf::Transform ee_transform(this->stamp_ee_transform.getRotation(), this->stamp_ee_transform.getOrigin());
-        tf::transformTFToEigen(ee_transform, this->end_effector_state);
-
-        // Print the current end-effector pose
-        if (DEBUG)
-        {
-            ROS_INFO_STREAM("Endeffector current Translation: " << this->end_effector_state.translation());
-            ROS_INFO_STREAM("Endeffector current Rotation: " << this->end_effector_state.rotation());
-        }
-
+        // Getting the robot joint model
         const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
-        moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        robot_state::RobotState start_state(*current_state);
+        robot_state::RobotState start_state(*group.getCurrentState());
         auto joint_names = group.getVariableNames();
 
-        // Setting the start pose
-        if (this->isReallyNullPose(this->initial_pose))
+        // Printing the planning group frame and the group ee frame
+        if (DEBUG)
+        {
+            ROS_INFO("MoveIt Group Reference frame: %s", group.getPlanningFrame().c_str());
+            ROS_INFO("MoveIt Group End-effector frame: %s", group.getEndEffectorLink().c_str());
+        }
+
+        if (!this->isNullPose(this->initial_configuration))
+        {
+            ROS_INFO("Setting Initial Position");
+            if (joint_names.size() == this->initial_configuration.size())
+            {
+                moveit::core::RobotStatePtr current_state = group.getCurrentState();
+                current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
+                group.setStartState(*current_state);
+                this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+                if (DEBUG)
+                {
+                    ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
+                    Eigen::Quaterniond initial_quat(this->startAff.rotation());
+                    ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
+                    ROS_WARN("Setting initial Position externally");
+                }
+            }
+            else
+            {
+                ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
+                gh.setAborted();
+                _cancelGoals.erase(goal_id);
+                return;
+            }
+        }
+        else
         {
             // If initial_pose is null, set the start state to the current state
             moveit::core::RobotStatePtr current_state = group.getCurrentState();
             group.setStartStateToCurrentState();
-            ROS_WARN("The start pose is NULL! Planning from the current pose!");
-            this->startAff = this->end_effector_state;
+            this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+            if (DEBUG)
+            {
+                ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
+                Eigen::Quaterniond initial_quat(this->startAff.rotation());
+                ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
+                ROS_WARN("Setting initial Position internally");
+            }
         }
-        else
-        {
-            tf::poseMsgToEigen(this->initial_pose, this->startAff);
-            current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
-            group.setStartState(*current_state);
-            ROS_WARN("Setting initial Position externally");
-        }
-
+        
         // Setting the goal pose
         tf::poseMsgToEigen(goal_pose, this->goalAff);
 
-        // Print the goal end-effector pose
-        if (DEBUG)
-        {
-            ROS_INFO_STREAM("Endeffector goal Translation: " << this->goalAff.translation());
-            ROS_INFO_STREAM("Endeffector goal Rotation: " << this->goalAff.linear());
-        }
-
-        // Perform Motion Plan
-        // robot_state::RobotState start_state(*group.getCurrentState());
-        // // Getting the robot joint model
-        // const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
-        // auto joint_names = group.getVariableNames();
-        // // Printing the planning group frame and the group ee frame
-        // if (DEBUG)
-        // {
-        //     ROS_INFO("MoveIt Group Reference frame: %s", group.getPlanningFrame().c_str());
-        //     ROS_INFO("MoveIt Group End-effector frame: %s", group.getEndEffectorLink().c_str());
-        // }
-        // // robot_state::RobotState start_state(*group.getCurrentState());
-
-        // if (!this->isNullPose(this->initial_configuration))
-        // {
-        //     ROS_INFO("Setting Initial Position");
-        //     if (joint_names.size() == this->initial_configuration.size())
-        //     {
-        //         moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        //         current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
-        //         group.setStartState(*current_state);
-        //         ROS_WARN("Setting initial Position externally");
-        //     }
-        //     else
-        //     {
-        //         ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
-        //         gh.setAborted();
-        //         _cancelGoals.erase(goal_id);
-        //         return;
-        //     }
-        // }
-        // else
-        // {
-        //     // If initial_pose is null, set the start state to the current state
-        //     moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        //     group.setStartStateToCurrentState();
-        //     ROS_WARN("Setting initial Position externally");
-        // }
-
-        std::string fixed_frame = group.getRobotModel()->getModelFrame();
-        ROS_WARN("The fixed frame is: %s", fixed_frame.c_str());
         // Calling the waypoint creator with start and goal poses
         std::vector<geometry_msgs::Pose> cart_waypoints;
         this->computeWaypointsFromPoses(this->startAff, this->goalAff, cart_waypoints);
-
-        // Setting the start state in the moveit group
-        // robot_state::RobotState start_state(*group.getCurrentState());
-
-        // if (!this->isNullPose(this->initial_configuration))
-        // {
-        //     ROS_INFO("Setting Initial Position");
-        //     if (joint_names.size() == this->initial_configuration.size())
-        //     {
-        //         moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        //         current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
-        //         group.setStartState(*current_state);
-        //     }
-        //     else
-        //     {
-        //         ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
-        //         gh.setAborted();
-        //         _cancelGoals.erase(goal_id);
-        //         return;
-        //     }
-        // }
-        // else
-        // {
-        //     // If initial_pose is null, set the start state to the current state
-        //     moveit::core::RobotStatePtr current_state = group.getCurrentState();
-        //     group.setStartState(*current_state); // Use current_state here
-        // }
 
         // Scale the velocity and acceleration of the computed trajectory
         const double velocity_scaling_factor = 0.5;     // Set your desired velocity scaling factor
