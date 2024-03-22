@@ -1,0 +1,4 @@
+cartesian_test_client:
+  goal_configuration: [0.8, 0.3, 0.390, 0.924, -0.383, 0.000, 0.000] #XYZ.qx,qy,qz,qw
+  initial_configuration: [] #joint positions
+  planning_group: "panda_arm"

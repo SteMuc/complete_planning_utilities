@@ -7,6 +7,7 @@
  */
 
 #include <ros/ros.h>
+#include <std_msgs/Int32.h>
 #include <actionlib/client/simple_action_client.h>
 #include "complete_planning_pkg/ActionClient.h"
 
@@ -50,16 +51,21 @@ int main(int argc, char **argv)
     // Create an Action client for the JointPlan action server
     actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction> joint_plan_client("joint_plan_action", true);
     actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction> slerp_plan_client("slerp_plan_action", true);
+    actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanAction> cartesian_plan_client("cartesian_plan_action", true);
 
     // Wait for the action server to start
     ROS_INFO("Waiting for JointPlan action server to start...");
     joint_plan_client.waitForServer();
     ROS_INFO("Waiting for SlerpPlan action server to start...");
     slerp_plan_client.waitForServer();
+    ROS_INFO("Waiting for CartesianPlan action server to start...");
+    cartesian_plan_client.waitForServer();
 
     // Create a goal to send to the action server
     complete_planning_msgs::JointPlanGoal goal;
     complete_planning_msgs::SlerpPlanGoal slerp_goal;
+    complete_planning_msgs::CartesianPlanGoal cartesian_goal;
+    
     // Load goal configuration from the parameter server
     std::vector<double> goal_pose_vec;
     if (!ros::param::get("/slerp_test_client/goal_configuration", goal_pose_vec))
@@ -105,12 +111,21 @@ int main(int argc, char **argv)
     slerp_goal.initial_pose.orientation.z = initial_pose_vec.at(5);
     slerp_goal.initial_pose.orientation.w = initial_pose_vec.at(6);
 
+    std_msgs::Int32 n_wps;
+
+    if (!ros::param::get("/slerp_test_client/number_of_waypoints", n_wps.data))
+    {
+        ROS_ERROR("Failed to load nwps parameter.");
+        return 1;
+    }
+    slerp_goal.number_of_waypoints = n_wps.data;
+
     // Send the goal to the action server
     ROS_INFO("Sending goal to SlerpPlan action server...");
     slerp_plan_client.sendGoal(slerp_goal);
 
     // Wait for the action to complete (you can add a timeout here)
-    bool finished_before_timeout = joint_plan_client.waitForResult();
+    bool finished_before_timeout = slerp_plan_client.waitForResult();
 
     if (finished_before_timeout)
     {

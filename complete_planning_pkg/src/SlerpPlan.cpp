@@ -29,6 +29,7 @@ namespace SlerpPlan
         this->initial_configuration = goal->initial_configuration;
         this->n_wp.data = goal->number_of_waypoints;
 
+        std::cout << "n_wp.data" << this->n_wp.data << std::endl;
         if (this->isPoseFilled(this->goal_pose))
         {
             ROS_ERROR("The goal pose is empty. Did you fill correctly the goal pose?");
@@ -78,15 +79,26 @@ namespace SlerpPlan
             ROS_INFO_STREAM("Endeffector current Rotation: " << this->end_effector_state.rotation());
         }
 
+        const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
+        moveit::core::RobotStatePtr current_state = group.getCurrentState();
+        robot_state::RobotState start_state(*current_state);
+        auto joint_names = group.getVariableNames();
+
         // Setting the start pose
         if (this->isReallyNullPose(this->initial_pose))
         {
+            // If initial_pose is null, set the start state to the current state
+            moveit::core::RobotStatePtr current_state = group.getCurrentState();
+            group.setStartStateToCurrentState();
             ROS_WARN("The start pose is NULL! Planning from the current pose!");
             this->startAff = this->end_effector_state;
         }
         else
         {
             tf::poseMsgToEigen(this->initial_pose, this->startAff);
+            current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
+            group.setStartState(*current_state);
+            ROS_WARN("Setting initial Position externally");
         }
 
         // Setting the goal pose
@@ -100,47 +112,76 @@ namespace SlerpPlan
         }
 
         // Perform Motion Plan
+        // robot_state::RobotState start_state(*group.getCurrentState());
+        // // Getting the robot joint model
+        // const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
+        // auto joint_names = group.getVariableNames();
+        // // Printing the planning group frame and the group ee frame
+        // if (DEBUG)
+        // {
+        //     ROS_INFO("MoveIt Group Reference frame: %s", group.getPlanningFrame().c_str());
+        //     ROS_INFO("MoveIt Group End-effector frame: %s", group.getEndEffectorLink().c_str());
+        // }
+        // // robot_state::RobotState start_state(*group.getCurrentState());
 
-        // Getting the robot joint model
-        const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
-        auto joint_names = group.getVariableNames();
-        // Printing the planning group frame and the group ee frame
-        if (DEBUG)
-        {
-            ROS_INFO("MoveIt Group Reference frame: %s", group.getPlanningFrame().c_str());
-            ROS_INFO("MoveIt Group End-effector frame: %s", group.getEndEffectorLink().c_str());
-        }
+        // if (!this->isNullPose(this->initial_configuration))
+        // {
+        //     ROS_INFO("Setting Initial Position");
+        //     if (joint_names.size() == this->initial_configuration.size())
+        //     {
+        //         moveit::core::RobotStatePtr current_state = group.getCurrentState();
+        //         current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
+        //         group.setStartState(*current_state);
+        //         ROS_WARN("Setting initial Position externally");
+        //     }
+        //     else
+        //     {
+        //         ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
+        //         gh.setAborted();
+        //         _cancelGoals.erase(goal_id);
+        //         return;
+        //     }
+        // }
+        // else
+        // {
+        //     // If initial_pose is null, set the start state to the current state
+        //     moveit::core::RobotStatePtr current_state = group.getCurrentState();
+        //     group.setStartStateToCurrentState();
+        //     ROS_WARN("Setting initial Position externally");
+        // }
 
+        std::string fixed_frame = group.getRobotModel()->getModelFrame();
+        ROS_WARN("The fixed frame is: %s", fixed_frame.c_str());
         // Calling the waypoint creator with start and goal poses
         std::vector<geometry_msgs::Pose> cart_waypoints;
         this->computeWaypointsFromPoses(this->startAff, this->goalAff, cart_waypoints);
 
         // Setting the start state in the moveit group
-        robot_state::RobotState start_state(*group.getCurrentState());
+        // robot_state::RobotState start_state(*group.getCurrentState());
 
-        if (!this->isNullPose(this->initial_configuration))
-        {
-            ROS_INFO("Setting Initial Position");
-            if (joint_names.size() == this->initial_configuration.size())
-            {
-                moveit::core::RobotStatePtr current_state = group.getCurrentState();
-                current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
-                group.setStartState(*current_state);
-            }
-            else
-            {
-                ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
-                gh.setAborted();
-                _cancelGoals.erase(goal_id);
-                return;
-            }
-        }
-        else
-        {
-            // If initial_pose is null, set the start state to the current state
-            moveit::core::RobotStatePtr current_state = group.getCurrentState();
-            group.setStartState(*current_state); // Use current_state here
-        }
+        // if (!this->isNullPose(this->initial_configuration))
+        // {
+        //     ROS_INFO("Setting Initial Position");
+        //     if (joint_names.size() == this->initial_configuration.size())
+        //     {
+        //         moveit::core::RobotStatePtr current_state = group.getCurrentState();
+        //         current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
+        //         group.setStartState(*current_state);
+        //     }
+        //     else
+        //     {
+        //         ROS_ERROR("Wrong size: the number of joints in the goal is %zu, while it should be %zu", initial_configuration.size(), joint_names.size());
+        //         gh.setAborted();
+        //         _cancelGoals.erase(goal_id);
+        //         return;
+        //     }
+        // }
+        // else
+        // {
+        //     // If initial_pose is null, set the start state to the current state
+        //     moveit::core::RobotStatePtr current_state = group.getCurrentState();
+        //     group.setStartState(*current_state); // Use current_state here
+        // }
 
         // Scale the velocity and acceleration of the computed trajectory
         const double velocity_scaling_factor = 0.5;     // Set your desired velocity scaling factor
@@ -229,7 +270,7 @@ namespace SlerpPlan
 
         // Setting the number of wp according to diff_vec
         int real_n_wp = std::floor(diff_vec.norm() * this->n_wp.data);
-        ROS_INFO_STREAM("Num Waypoints: " << real_n_wp);
+        ROS_INFO_STREAM(" Real Num Waypoints: " << real_n_wp);
         if (DEBUG)
         {
             ROS_INFO_STREAM("The norm of the diff_vec is " << diff_vec.norm() << ", so the new number of waypoints is " << real_n_wp << ".");
