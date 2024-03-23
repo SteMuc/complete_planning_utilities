@@ -50,7 +50,7 @@ include_directories(
 )
 
 ## Add your action server source files
-add_executable(planning_server src/CartesianPlan.cpp src/JointPlan.cpp src/SlerpPlan.cpp src/PlanningServer.cpp)
+add_executable(planning_server src/CartesianPlan.cpp src/JointPlan.cpp src/SlerpPlan.cpp src/SlerpPlanDisplacement.cpp src/PlanningServer.cpp)
 add_executable(planning_client src/PlanningClient.cpp)
 
 target_link_libraries(planning_server

@@ -1,12 +1,14 @@
 <!-- joint_plan_client.launch -->
 
 <launch>
-    <!-- Load parameters from the YAML file -->
-    <rosparam file="$(find complete_planning_pkg)/config/joint_plan.yaml" command="load"/>
-    <rosparam file="$(find complete_planning_pkg)/config/slerp_plan.yaml" command="load"/>
-    <rosparam file="$(find complete_planning_pkg)/config/cartesian_plan.yaml" command="load"/>
+  <!-- Load parameters from the YAML file -->
+  <rosparam file="$(find complete_planning_pkg)/config/joint_plan.yaml" command="load" />
+  <rosparam file="$(find complete_planning_pkg)/config/slerp_plan.yaml" command="load" />
+  <rosparam file="$(find complete_planning_pkg)/config/slerp_plan_displacement.yaml" command="load" />
+  <rosparam file="$(find complete_planning_pkg)/config/cartesian_plan.yaml" command="load" />
 
-  
-    <!-- Launch the client node -->
-    <node name="test_plan_client_node" pkg="complete_planning_pkg" type="planning_client" output="screen"/>
-  </launch>
+
+  <!-- Launch the client node -->
+  <node name="test_plan_client_node" pkg="complete_planning_pkg" type="planning_client"
+    output="screen" />
+</launch>

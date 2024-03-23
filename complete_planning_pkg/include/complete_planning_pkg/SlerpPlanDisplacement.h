@@ -56,6 +56,7 @@ namespace SlerpPlanDisplacement
         //
         Eigen::Affine3d startAff;
         Eigen::Affine3d goalAff;
+        Eigen::Affine3d end_effector_state;
         Eigen::Affine3d DisplacementAff;
 
         /**

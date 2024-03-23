@@ -17,6 +17,10 @@
 #include <complete_planning_msgs/SlerpPlanAction.h>
 #include <complete_planning_msgs/SlerpPlanGoal.h>
 
+// Slerp Displacement plan Action headers
+#include <complete_planning_msgs/SlerpPlanDisplacementAction.h>
+#include <complete_planning_msgs/SlerpPlanDisplacementGoal.h>
+
 // Grasp action headers
 #include <complete_planning_msgs/GraspAction.h>
 #include <complete_planning_msgs/GraspGoal.h>

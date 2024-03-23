@@ -29,7 +29,7 @@ namespace SlerpPlanDisplacement
         this->initial_configuration = goal->initial_configuration;
         this->n_wp.data = goal->number_of_waypoints;
 
-        std::cout << "n_wp.data" << this->n_wp.data << std::endl;
+        std::cout << "number of waypoints are: " << this->n_wp.data << std::endl;
 
         if (this->isDisplacementFilled(this->pos_disp, this->angular_disp))
         {
@@ -79,18 +79,17 @@ namespace SlerpPlanDisplacement
                 moveit::core::RobotStatePtr current_state = group.getCurrentState();
                 current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
                 group.setStartState(*current_state);
-                this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
-                this->goalAff = this->startAff * this->DisplacementAff;
+                this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+                this->startAff = this->end_effector_state;
+                // this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+                // this->goalAff = this->startAff * this->DisplacementAff;
+
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");
                     ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
                     Eigen::Quaterniond initial_quat(this->startAff.rotation());
                     ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
-
-                    ROS_INFO_STREAM("The Final Goal Translation of the robot is:" << this->goalAff.translation() << "\n");
-                    Eigen::Quaterniond goal_quat(this->goalAff.rotation());
-                    ROS_INFO_STREAM("The Final Goal Quaternion of the robot is:" << goal_quat.coeffs() << "\n");
                 }
             }
             else
@@ -104,10 +103,14 @@ namespace SlerpPlanDisplacement
         else
         {
             // If initial_pose is null, set the start state to the current state
+            ROS_WARN("Planning from the current state");
             moveit::core::RobotStatePtr current_state = group.getCurrentState();
             group.setStartStateToCurrentState();
-            this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
-            this->goalAff = this->startAff * this->DisplacementAff;
+            this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+            this->startAff = this->end_effector_state;
+            //
+            // this->goalAff = this->end_effector_state * this->DisplacementAff;
+            // this->startAff = this->end_effector_state * this->DisplacementAff;
 
             if (DEBUG)
             {
@@ -115,12 +118,20 @@ namespace SlerpPlanDisplacement
                 ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
                 Eigen::Quaterniond initial_quat(this->startAff.rotation());
                 ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
-
-                ROS_INFO_STREAM("The Final Goal Translation of the robot is:" << this->goalAff.translation() << "\n");
-                Eigen::Quaterniond goal_quat(this->goalAff.rotation());
-                ROS_INFO_STREAM("The Final Goal Quaternion of the robot is:" << goal_quat.coeffs() << "\n");
             }
         }
+
+        // If the goal is relative, get the global goal and start poses by multiplying it with ee pose (end_effector_state)
+        // this->startAff = this->startAff * this->DisplacementAff;
+        Eigen::Quaterniond quat_start_aff(this->startAff.linear());
+        std::cout << "Start Aff Translation: " << this->startAff.translation() << std::endl;
+        std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " " << " " << quat_start_aff.z() << " " << std::endl;
+
+        this->goalAff = this->startAff * this->DisplacementAff;
+
+        Eigen::Quaterniond quat_goal_aff(this->goalAff.linear());
+        std::cout << "Goal Aff Translation: " << this->goalAff.translation() << std::endl;
+        std::cout << "Goal Quaternion is:" << quat_goal_aff.x() << " " << quat_goal_aff.y() << " " << quat_goal_aff.z() << " " << " " << quat_goal_aff.z() << " " << std::endl;
 
         // Visual tools
         namespace rvt = rviz_visual_tools;
@@ -157,7 +168,7 @@ namespace SlerpPlanDisplacement
         visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
         visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::LIME_GREEN);
         visual_tools.trigger();
-
+        std::cout << "Pippo1" << std::endl;
         complete_planning_msgs::SlerpPlanDisplacementResult result;
         // If complete path is not achieved return false, true otherwise
         if (fraction != 1.0)
@@ -167,6 +178,8 @@ namespace SlerpPlanDisplacement
             ROS_INFO("Set Aborted!");
             _cancelGoals.erase(goal_id);
             gh.setAborted(result);
+            std::cout << "Pippo2" << std::endl;
+
             return;
         }
         else
@@ -174,6 +187,8 @@ namespace SlerpPlanDisplacement
             ROS_INFO("Set succeeded!!");
             result.planned_trajectory = trajectory;
             _cancelGoals.erase(goal_id);
+            std::cout << "Pippo3" << std::endl;
+
             gh.setSucceeded(result);
         }
     };
@@ -226,8 +241,16 @@ namespace SlerpPlanDisplacement
         Eigen::Quaterniond goal_quat(goal_pose.linear());
         Eigen::Quaterniond diff_quat;
 
-        // Setting the number of wp according to diff_vec
-        int real_n_wp = std::floor(diff_vec.norm() * this->n_wp.data);
+        // distance between 2 quaternions
+        double dot_product = start_quat.dot(goal_quat);
+        double distance_quat = std::sqrt(1 - dot_product * dot_product);
+        // Setting the number of wp according to diff_vec and distance quat
+
+        std::cout << "n_wp.data is: "<< this->n_wp.data << std::endl;
+        ROS_WARN("The diff_vec norm is: %f", diff_vec.norm());
+        ROS_WARN("The distance_quat norm is: %f", distance_quat);
+
+        int real_n_wp = std::floor(std::max(diff_vec.norm(),distance_quat) * this->n_wp.data);
         ROS_INFO_STREAM(" Real Num Waypoints: " << real_n_wp);
         if (DEBUG)
         {

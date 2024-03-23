@@ -1,0 +1,6 @@
+slerp_displacement_test_client:
+  pos_disp: [0, 0, 0]
+  angular_disp: [-0.5, 0, 0]
+  initial_configuration: []
+  number_of_waypoints: 10
+  planning_group: "panda_arm"
