@@ -1,11 +1,11 @@
 /**
- * @file SlerpPlan.h
- * @brief Header file for ROS Slerp action server. Uses SLERP interpolation between presnt ee pose and goal pose to create homogeneous motion.
+ * @file SlerpPlanDisplacement.h
+ * @brief Header file for ROS Slerp Displacement action server. Uses SLERP interpolation between presnt ee pose and goal pose to create homogeneous motion.
  * @author Alessandro Palleschi, Stefano Angeli
  */
 
-#ifndef SLERPSERVER_H
-#define SLERPSERVER_H
+#ifndef SLERPDISPLACEMENTSERVER_H
+#define SLERPDISPLACEMENTSERVER_H
 
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
@@ -19,17 +19,21 @@
 #include <actionlib/server/server_goal_handle.h>
 
 // Cartesian plan Action headers
-#include <complete_planning_msgs/SlerpPlanAction.h>
-#include <complete_planning_msgs/SlerpPlanGoal.h>
-#include <complete_planning_msgs/SlerpPlanResult.h>
-#include <complete_planning_msgs/SlerpPlanFeedback.h>
+#include <complete_planning_msgs/SlerpPlanDisplacementAction.h>
+#include <complete_planning_msgs/SlerpPlanDisplacementGoal.h>
+#include <complete_planning_msgs/SlerpPlanDisplacementResult.h>
+#include <complete_planning_msgs/SlerpPlanDisplacementFeedback.h>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
-namespace SlerpPlan
+// Defines
+#define DEBUG 1 // Prints out additional stuff
+
+namespace SlerpPlanDisplacement
 {
-    typedef actionlib::ServerGoalHandle<complete_planning_msgs::SlerpPlanAction> GoalHandle;
+    typedef actionlib::ServerGoalHandle<complete_planning_msgs::SlerpPlanDisplacementAction> GoalHandle;
 
     /**
      * @class SlerpPlanActionServer
@@ -37,30 +41,32 @@ namespace SlerpPlan
      *
      */
 
-    class SlerpPlanActionServer
+    class SlerpPlanDisplacementActionServer
     {
     protected:
         ros::NodeHandle _nh;
-        actionlib::ActionServer<complete_planning_msgs::SlerpPlanAction> _as;
+        actionlib::ActionServer<complete_planning_msgs::SlerpPlanDisplacementAction> _as;
         std::map<std::string, bool> _cancelGoals;
         //
-        geometry_msgs::Pose goal_pose;
-        std::string planning_group;
+        geometry_msgs::Point pos_disp;
+        geometry_msgs::Point angular_disp;
         std::vector<double> initial_configuration;
+        std::string planning_group;
         std_msgs::Int32 n_wp;
         //
         Eigen::Affine3d startAff;
         Eigen::Affine3d goalAff;
+        Eigen::Affine3d DisplacementAff;
 
         /**
          * @brief Check if a given pose is a null pose.
          * @param pose The pose to check.
          * @return True if the pose is null, false otherwise.
          */
-        inline bool isNullPose(const geometry_msgs::Pose &pose)
+        inline bool isDisplacementFilled(const geometry_msgs::Point &pos_disp,const geometry_msgs::Point &angular_disp)
         {
-            return (pose.position.x == 0.0 && pose.position.y == 0.0 && pose.position.z == 0.0 &&
-                    pose.orientation.x == 0.0 && pose.orientation.y == 0.0 && pose.orientation.z == 0.0 && pose.orientation.w == 1.0);
+            return (pos_disp.x == 0.0 && pos_disp.y == 0.0 && pos_disp.z == 0.0 &&
+                    angular_disp.x == 0.0 && angular_disp.y == 0.0 && angular_disp.z == 0.0);
         };
 
         /**
@@ -74,19 +80,19 @@ namespace SlerpPlan
         }
 
     public:
-        SlerpPlanActionServer(ros::NodeHandle &nh, const std::string &action_name)
-            : _nh(nh), _as(_nh, action_name, boost::bind(&SlerpPlanActionServer::onGoal, this, _1),
-                           boost::bind(&SlerpPlanActionServer::onCancel, this, _1),
+        SlerpPlanDisplacementActionServer(ros::NodeHandle &nh, const std::string &action_name)
+            : _nh(nh), _as(_nh, action_name, boost::bind(&SlerpPlanDisplacementActionServer::onGoal, this, _1),
+                           boost::bind(&SlerpPlanDisplacementActionServer::onCancel, this, _1),
                            false)
         {
             _as.start();
-            ROS_INFO("SlerpPlanActionServer has been started");
+            ROS_INFO("SlerpPlanDisplacementActionServer has been started");
         };
 
-        ~SlerpPlanActionServer(){
+        ~SlerpPlanDisplacementActionServer(){
             // Nothin to do here
         };
-
+        Eigen::Affine3d convert_to_affine(geometry_msgs::Point &pos_disp, geometry_msgs::Point &angular_disp);
         void onGoal(GoalHandle gh);
         void onCancel(GoalHandle gh);
         bool isPoseFilled(const geometry_msgs::Pose &pose);

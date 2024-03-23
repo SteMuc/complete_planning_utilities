@@ -1,8 +1,8 @@
 /**
- * @file SlerpPlan.cpp
- * @brief Implementation of Slerp action server classes for Slerp planning.
+ * @file SlerpPlanDisplacement.cpp
+ * @brief Implementation of Slerp Displacement action server classes for Slerp planning.
  *
- * This file contains the implementations of action server classes for Slerp planning
+ * This file contains the implementations of action server classes for Slerp Displacement planning
  * using the MoveIt MoveGroupInterface. It provides functionality to plan trajectories and respond to
  * action goals.
  *
@@ -10,29 +10,30 @@
  * @email alessandropalleschi94@gmail.com, stefano.angeli@ing.unipi.it
  */
 
-#include <complete_planning_pkg/SlerpPlan.h>
-#include <complete_planning_pkg/constants.h>
+#include <complete_planning_pkg/SlerpPlanDisplacement.h>
 
-namespace SlerpPlan
+namespace SlerpPlanDisplacement
 {
-    void SlerpPlanActionServer::onGoal(GoalHandle gh)
+    void SlerpPlanDisplacementActionServer::onGoal(GoalHandle gh)
     {
         ROS_INFO("Received new Slerp Goal!");
         _cancelGoals[gh.getGoalID().id] = false;
 
-        boost::shared_ptr<const complete_planning_msgs::SlerpPlanGoal> goal = gh.getGoal();
+        boost::shared_ptr<const complete_planning_msgs::SlerpPlanDisplacementGoal> goal = gh.getGoal();
         std::string goal_id = gh.getGoalID().id;
 
-        // Initialize Cartesian goal
-        this->goal_pose = goal->goal_pose;
+        // Initialize Slerp Displacement goal
+        this->pos_disp = goal->pos_disp;
+        this->angular_disp = goal->angular_disp;
         this->planning_group = goal->planning_group;
         this->initial_configuration = goal->initial_configuration;
         this->n_wp.data = goal->number_of_waypoints;
 
         std::cout << "n_wp.data" << this->n_wp.data << std::endl;
-        if (this->isPoseFilled(this->goal_pose))
+
+        if (this->isDisplacementFilled(this->pos_disp, this->angular_disp))
         {
-            ROS_ERROR("The goal pose is empty. Did you fill correctly the goal pose?");
+            ROS_ERROR("The displacement is empty. Did you fill correctly the displacement?");
             _cancelGoals.erase(goal_id);
             gh.setRejected();
             return;
@@ -43,14 +44,13 @@ namespace SlerpPlan
             gh.setAccepted();
             ROS_INFO("Goal Accepted!");
             ROS_INFO("Processing goal: %s", goal_id.c_str());
-            ROS_INFO("Goal Pose is: %f, %f, %f, %f, %f, %f, %f",
-                     this->goal_pose.position.x,
-                     this->goal_pose.position.y,
-                     this->goal_pose.position.z,
-                     this->goal_pose.orientation.x,
-                     this->goal_pose.orientation.y,
-                     this->goal_pose.orientation.z,
-                     this->goal_pose.orientation.w);
+            ROS_INFO("The Position Displacement is: %f, %f, %f. The Angular Displacement is: %f, %f, %f",
+                     this->pos_disp.x,
+                     this->pos_disp.y,
+                     this->pos_disp.z,
+                     this->angular_disp.x,
+                     this->angular_disp.y,
+                     this->angular_disp.z);
         }
 
         // Initialize the MoveGroupInterface
@@ -60,6 +60,9 @@ namespace SlerpPlan
         const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
         robot_state::RobotState start_state(*group.getCurrentState());
         auto joint_names = group.getVariableNames();
+
+        // Convert the Displacement into Eigen Affine3d
+        this->DisplacementAff = this->convert_to_affine(this->pos_disp, this->angular_disp);
 
         // Printing the planning group frame and the group ee frame
         if (DEBUG)
@@ -77,12 +80,17 @@ namespace SlerpPlan
                 current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
                 group.setStartState(*current_state);
                 this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+                this->goalAff = this->startAff * this->DisplacementAff;
                 if (DEBUG)
                 {
+                    ROS_WARN("Setting initial Position externally");
                     ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
                     Eigen::Quaterniond initial_quat(this->startAff.rotation());
                     ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
-                    ROS_WARN("Setting initial Position externally");
+
+                    ROS_INFO_STREAM("The Final Goal Translation of the robot is:" << this->goalAff.translation() << "\n");
+                    Eigen::Quaterniond goal_quat(this->goalAff.rotation());
+                    ROS_INFO_STREAM("The Final Goal Quaternion of the robot is:" << goal_quat.coeffs() << "\n");
                 }
             }
             else
@@ -99,17 +107,20 @@ namespace SlerpPlan
             moveit::core::RobotStatePtr current_state = group.getCurrentState();
             group.setStartStateToCurrentState();
             this->startAff = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+            this->goalAff = this->startAff * this->DisplacementAff;
+
             if (DEBUG)
             {
+                ROS_WARN("Setting initial Position internally");
                 ROS_INFO_STREAM("The Start Initial Translation of the robot is:" << this->startAff.translation() << "\n");
                 Eigen::Quaterniond initial_quat(this->startAff.rotation());
                 ROS_INFO_STREAM("The Start Initial Quaternion of the robot is:" << initial_quat.coeffs() << "\n");
-                ROS_WARN("Setting initial Position internally");
+
+                ROS_INFO_STREAM("The Final Goal Translation of the robot is:" << this->goalAff.translation() << "\n");
+                Eigen::Quaterniond goal_quat(this->goalAff.rotation());
+                ROS_INFO_STREAM("The Final Goal Quaternion of the robot is:" << goal_quat.coeffs() << "\n");
             }
         }
-
-        // Setting the goal pose
-        tf::poseMsgToEigen(goal_pose, this->goalAff);
 
         // Visual tools
         namespace rvt = rviz_visual_tools;
@@ -141,14 +152,13 @@ namespace SlerpPlan
         ROS_INFO("Computed time stamp %s", success ? "SUCCEDED" : "FAILED");
         rt.getRobotTrajectoryMsg(trajectory);
 
-        #ifdef VISUAL
+        //
         ROS_INFO("Visualizing the computed plan as trajectory line.");
         visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
-        visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
+        visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::LIME_GREEN);
         visual_tools.trigger();
-        #endif
 
-        complete_planning_msgs::SlerpPlanResult result;
+        complete_planning_msgs::SlerpPlanDisplacementResult result;
         // If complete path is not achieved return false, true otherwise
         if (fraction != 1.0)
         {
@@ -168,7 +178,7 @@ namespace SlerpPlan
         }
     };
 
-    void SlerpPlanActionServer::onCancel(GoalHandle gh)
+    void SlerpPlanDisplacementActionServer::onCancel(GoalHandle gh)
     {
         ROS_INFO("Cancel request has been received.");
         if (_cancelGoals.count(gh.getGoalID().id) > 0)
@@ -178,7 +188,7 @@ namespace SlerpPlan
         }
     };
 
-    bool SlerpPlanActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
+    bool SlerpPlanDisplacementActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
     {
         // Check if position and orientation arrays have 3 and 4 elements respectively
         return pose.position.x != 0.0 && pose.position.y != 0.0 && pose.position.z != 0.0 &&
@@ -186,7 +196,7 @@ namespace SlerpPlan
                pose.orientation.w != 0.0;
     };
 
-    bool SlerpPlanActionServer::isReallyNullPose(const geometry_msgs::Pose &pose)
+    bool SlerpPlanDisplacementActionServer::isReallyNullPose(const geometry_msgs::Pose &pose)
     {
         geometry_msgs::Point pos = pose.position;
         geometry_msgs::Quaternion quat = pose.orientation;
@@ -201,7 +211,7 @@ namespace SlerpPlan
     };
 
     // Computes waypoints using SLERP from two poses
-    void SlerpPlanActionServer::computeWaypointsFromPoses(const Eigen::Affine3d &start_pose, const Eigen::Affine3d &goal_pose, std::vector<geometry_msgs::Pose> &waypoints)
+    void SlerpPlanDisplacementActionServer::computeWaypointsFromPoses(const Eigen::Affine3d &start_pose, const Eigen::Affine3d &goal_pose, std::vector<geometry_msgs::Pose> &waypoints)
     {
 
         // Compute waypoints as linear interpolation (SLERP for rotations) between the two poses
@@ -240,5 +250,30 @@ namespace SlerpPlan
                           << wp_eigen.translation() << std::endl;
             }
         }
+    };
+
+    Eigen::Affine3d SlerpPlanDisplacementActionServer::convert_to_affine(geometry_msgs::Point &pos_disp, geometry_msgs::Point &angular_disp)
+    {
+        // Create Affine3d transformation
+        Eigen::Affine3d affineTransformation = Eigen::Affine3d::Identity();
+
+        // Orientation
+        Eigen::Matrix3d rotation_matrix;
+        rotation_matrix = Eigen::AngleAxisd(angular_disp.x * M_PI, Eigen::Vector3d::UnitX()) *
+                          Eigen::AngleAxisd(angular_disp.y * M_PI, Eigen::Vector3d::UnitY()) *
+                          Eigen::AngleAxisd(angular_disp.z * M_PI, Eigen::Vector3d::UnitZ());
+
+        // Translation
+        Eigen::Vector3d translation(pos_disp.x, pos_disp.y, pos_disp.z);
+
+        // Set the rotation and translation
+        affineTransformation.linear() = rotation_matrix;
+        affineTransformation.translation() = translation;
+
+        // Print the Affine3d transformation
+        std::cout << "Affine transformation:\n"
+                  << affineTransformation.matrix() << std::endl;
+
+        return affineTransformation;
     };
 }

@@ -21,6 +21,7 @@
 #include <complete_planning_msgs/JointPlanFeedback.h>
 
 #include <Eigen/Dense>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 
 namespace JointPlan
 {

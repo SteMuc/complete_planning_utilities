@@ -11,6 +11,7 @@
  */
 
 #include <complete_planning_pkg/JointPlan.h>
+#include <complete_planning_pkg/constants.h>
 
 namespace JointPlan
 {
@@ -84,12 +85,28 @@ namespace JointPlan
 
         complete_planning_msgs::JointPlanResult result;
 
+        // Visual tools
+        namespace rvt = rviz_visual_tools;
+        moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+        visual_tools.deleteAllMarkers();
+
+        // Loading the remote control for visual tools and promting a message
+        visual_tools.loadRemoteControl();
+        visual_tools.trigger();
+
         // Plan the trajectory
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         moveit::core::MoveItErrorCode planning_result = group.plan(plan);
 
         if (planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS)
         {
+            #ifdef VISUAL
+            ROS_INFO("Visualizing the computed plan as trajectory line.");
+            visual_tools.deleteAllMarkers();
+            visual_tools.publishTrajectoryLine(plan.trajectory_, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
+            visual_tools.trigger();
+            #endif
+
             result.planned_trajectory = plan.trajectory_;
             gh.setSucceeded(result);
             ROS_INFO("Set Succeeded");

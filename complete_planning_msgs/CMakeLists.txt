@@ -74,6 +74,7 @@ add_action_files(
   Release.action
   ExecutePlan.action
   SlerpPlan.action
+  SlerpPlanDisplacement.action
 )
 
 ## Generate added messages and services with any dependencies listed here

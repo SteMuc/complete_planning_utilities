@@ -11,6 +11,7 @@
  */
 
 #include <complete_planning_pkg/CartesianPlan.h>
+#include <complete_planning_pkg/constants.h>
 
 namespace CartesianPlan
 {
@@ -70,6 +71,15 @@ namespace CartesianPlan
             return;
         }
 
+        // Visual tools
+        namespace rvt = rviz_visual_tools;
+        moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+        visual_tools.deleteAllMarkers();
+
+        // Loading the remote control for visual tools and promting a message
+        visual_tools.loadRemoteControl();
+        visual_tools.trigger();
+
         if (!this->isNullPose(this->initial_configuration))
         {
             ROS_INFO("Setting Initial Position");
@@ -109,7 +119,15 @@ namespace CartesianPlan
         //
         complete_planning_msgs::CartesianPlanResult result;
         if (planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS)
-        {
+        {   
+            #ifdef VISUAL
+            ROS_INFO("Visualizing the computed plan as trajectory line.");
+            visual_tools.deleteAllMarkers();
+            visual_tools.publishAxisLabeled(this->goal_pose, "goal pose");
+            visual_tools.publishTrajectoryLine(plan.trajectory_, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
+            visual_tools.trigger();
+            #endif
+            //
             result.planned_trajectory = plan.trajectory_;
             gh.setSucceeded(result);
             _cancelGoals.erase(goal_id);

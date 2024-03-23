@@ -20,6 +20,8 @@
 #include <complete_planning_msgs/CartesianPlanFeedback.h>
 #include <Eigen/Dense>
 
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
 namespace CartesianPlan
 {
 
