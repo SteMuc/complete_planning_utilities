@@ -11,7 +11,7 @@
  */
 
 #include <complete_planning_pkg/SlerpPlan.h>
-#include <complete_planning_pkg/constants.h>
+#include <utils/constants.h>
 
 namespace SlerpPlan
 {

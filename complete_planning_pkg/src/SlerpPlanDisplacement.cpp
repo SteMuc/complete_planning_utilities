@@ -11,6 +11,7 @@
  */
 
 #include <complete_planning_pkg/SlerpPlanDisplacement.h>
+#include <utils/constants.h>
 
 namespace SlerpPlanDisplacement
 {
@@ -244,8 +245,8 @@ namespace SlerpPlanDisplacement
         // distance between 2 quaternions
         double dot_product = start_quat.dot(goal_quat);
         double distance_quat = std::sqrt(1 - dot_product * dot_product);
-        // Setting the number of wp according to diff_vec and distance quat
 
+        // Setting the number of wp according to diff_vec and distance quat
         std::cout << "n_wp.data is: "<< this->n_wp.data << std::endl;
         ROS_WARN("The diff_vec norm is: %f", diff_vec.norm());
         ROS_WARN("The distance_quat norm is: %f", distance_quat);

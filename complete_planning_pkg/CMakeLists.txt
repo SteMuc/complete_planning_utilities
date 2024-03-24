@@ -30,7 +30,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 
 catkin_package(
-   INCLUDE_DIRS include
+   INCLUDE_DIRS include 
 #  LIBRARIES complete_planning_pkg
  CATKIN_DEPENDS complete_planning_msgs geometry_msgs moveit_core moveit_ros_perception moveit_ros_planning_interface roscpp rospy sensor_msgs std_msgs std_srvs trajectory_msgs
 #  DEPENDS system_lib
@@ -60,6 +60,7 @@ target_link_libraries(planning_server
 target_link_libraries(planning_client
   ${catkin_LIBRARIES}
 )
+
 
 #############
 ## Install ##
