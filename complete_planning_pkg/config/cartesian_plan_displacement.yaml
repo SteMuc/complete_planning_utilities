@@ -1,0 +1,5 @@
+cartesian_displacement_test_client:
+  pos_disp: [0.0, 0.0, 0.3]
+  angular_disp: [0.0, 0.0, -0.4]
+  initial_configuration: [0.45448189376328785, -1.1297269407369865, 0.3859783157306231, -2.433124624816856, 0.35672199565053314, 1.3479963697436024, 1.4938383925613383]
+  planning_group: "panda_arm"

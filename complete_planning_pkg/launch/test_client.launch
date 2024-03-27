@@ -6,6 +6,7 @@
   <rosparam file="$(find complete_planning_pkg)/config/slerp_plan.yaml" command="load" />
   <rosparam file="$(find complete_planning_pkg)/config/slerp_plan_displacement.yaml" command="load" />
   <rosparam file="$(find complete_planning_pkg)/config/cartesian_plan.yaml" command="load" />
+  <rosparam file="$(find complete_planning_pkg)/config/cartesian_plan_displacement.yaml" command="load" />
 
 
   <!-- Launch the client node -->

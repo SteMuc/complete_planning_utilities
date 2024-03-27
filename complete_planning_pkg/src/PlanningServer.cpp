@@ -11,6 +11,8 @@
 #include "complete_planning_pkg/JointPlan.h"
 #include "complete_planning_pkg/SlerpPlan.h"
 #include "complete_planning_pkg/SlerpPlanDisplacement.h"
+#include "complete_planning_pkg/CartesianPlanDisplacement.h"
+
 
 int main(int argc, char **argv)
 {
@@ -25,6 +27,7 @@ int main(int argc, char **argv)
     JointPlan::JointPlanActionServer joint_server(nh, "joint_plan_action");
     SlerpPlan::SlerpPlanActionServer slerp_server(nh, "slerp_plan_action");
     SlerpPlanDisplacement::SlerpPlanDisplacementActionServer slerp_displacement_server(nh, "slerp_plan_displacement_action");
+    CartesianPlanDisplacement::CartesianPlanDisplacementActionServer cartesian_displacement_server(nh, "cartesian_plan_displacement_action");
 
     ros::waitForShutdown();
     return 0;

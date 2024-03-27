@@ -1,9 +1,8 @@
 # goal
 geometry_msgs/Point pos_disp
-geometry_msgs/Point angular_disp
+geometry_msgs/Point angular_disp  
 float64[] initial_configuration
 string planning_group
-string reference_frame
 ---
 #result
 moveit_msgs/RobotTrajectory planned_trajectory

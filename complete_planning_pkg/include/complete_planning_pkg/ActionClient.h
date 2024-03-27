@@ -12,7 +12,6 @@
 #include <complete_planning_msgs/JointPlanAction.h>
 #include <complete_planning_msgs/JointPlanGoal.h>
 
-
 // Slerp plan Action headers
 #include <complete_planning_msgs/SlerpPlanAction.h>
 #include <complete_planning_msgs/SlerpPlanGoal.h>
@@ -20,6 +19,10 @@
 // Slerp Displacement plan Action headers
 #include <complete_planning_msgs/SlerpPlanDisplacementAction.h>
 #include <complete_planning_msgs/SlerpPlanDisplacementGoal.h>
+
+// Cartesian Displacement plan Action headers
+#include <complete_planning_msgs/CartesianPlanDisplacementAction.h>
+#include <complete_planning_msgs/CartesianPlanDisplacementGoal.h>
 
 // Grasp action headers
 #include <complete_planning_msgs/GraspAction.h>

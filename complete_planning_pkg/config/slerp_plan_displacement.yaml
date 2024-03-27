@@ -1,6 +1,6 @@
 slerp_displacement_test_client:
   pos_disp: [0.0, 0.0, 0.3]
   angular_disp: [0.0, 0.0, -0.4]
-  initial_configuration: [0.24199894212186024, -0.7984386083693374, -0.1554100022987388, -2.354300582292882, -0.11114963755829442, 1.5618821703790897, 0.07534131684785159]
+  initial_configuration: []
   number_of_waypoints: 10
   planning_group: "panda_arm"

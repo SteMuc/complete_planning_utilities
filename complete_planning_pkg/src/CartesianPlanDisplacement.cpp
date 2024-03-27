@@ -1,8 +1,8 @@
 /**
- * @file SlerpPlanDisplacement.cpp
- * @brief Implementation of Slerp Displacement action server classes for Slerp planning.
+ * @file CartesianPlanDisplacement.cpp
+ * @brief Implementation of Cartesian Plan Displacement action server classes for Cartesian planning.
  *
- * This file contains the implementations of action server classes for Slerp Displacement planning
+ * This file contains the implementations of action server classes for Cartesian Displacement planning
  * using the MoveIt MoveGroupInterface. It provides functionality to plan trajectories and respond to
  * action goals.
  *
@@ -10,17 +10,17 @@
  * @email alessandropalleschi94@gmail.com, stefano.angeli@ing.unipi.it
  */
 
-#include <complete_planning_pkg/SlerpPlanDisplacement.h>
+#include <complete_planning_pkg/CartesianPlanDisplacement.h>
 #include <utils/constants.h>
 
-namespace SlerpPlanDisplacement
+namespace CartesianPlanDisplacement
 {
-    void SlerpPlanDisplacementActionServer::onGoal(GoalHandle gh)
+    void CartesianPlanDisplacementActionServer::onGoal(GoalHandle gh)
     {
         ROS_INFO("Received new Slerp Goal!");
         _cancelGoals[gh.getGoalID().id] = false;
 
-        boost::shared_ptr<const complete_planning_msgs::SlerpPlanDisplacementGoal> goal = gh.getGoal();
+        boost::shared_ptr<const complete_planning_msgs::CartesianPlanDisplacementGoal> goal = gh.getGoal();
         std::string goal_id = gh.getGoalID().id;
 
         // Initialize Slerp Displacement goal
@@ -28,9 +28,6 @@ namespace SlerpPlanDisplacement
         this->angular_disp = goal->angular_disp;
         this->planning_group = goal->planning_group;
         this->initial_configuration = goal->initial_configuration;
-        this->n_wp.data = goal->number_of_waypoints;
-
-        std::cout << "number of waypoints are: " << this->n_wp.data << std::endl;
 
         if (this->isDisplacementFilled(this->pos_disp, this->angular_disp))
         {
@@ -80,11 +77,6 @@ namespace SlerpPlanDisplacement
                 moveit::core::RobotStatePtr current_state = group.getCurrentState();
                 current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
                 group.setStartState(*current_state);
-                this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
-                this->startAff = this->end_effector_state;
-                // this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
-                // this->goalAff = this->startAff * this->DisplacementAff;
-
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");
@@ -109,9 +101,6 @@ namespace SlerpPlanDisplacement
             group.setStartStateToCurrentState();
             this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
             this->startAff = this->end_effector_state;
-            //
-            // this->goalAff = this->end_effector_state * this->DisplacementAff;
-            // this->startAff = this->end_effector_state * this->DisplacementAff;
 
             if (DEBUG)
             {
@@ -126,13 +115,28 @@ namespace SlerpPlanDisplacement
         // this->startAff = this->startAff * this->DisplacementAff;
         Eigen::Quaterniond quat_start_aff(this->startAff.linear());
         std::cout << "Start Aff Translation: " << this->startAff.translation() << std::endl;
-        std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " " << " " << quat_start_aff.z() << " " << std::endl;
+        std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " "
+                  << " " << quat_start_aff.z() << " " << std::endl;
 
         this->goalAff = this->startAff * this->DisplacementAff;
 
+        // Set the Pose Target
+        tf::poseEigenToMsg(this->goalAff, this->goal_pose);
+        group.setPoseTarget(this->goal_pose);
+
         Eigen::Quaterniond quat_goal_aff(this->goalAff.linear());
         std::cout << "Goal Aff Translation: " << this->goalAff.translation() << std::endl;
-        std::cout << "Goal Quaternion is:" << quat_goal_aff.x() << " " << quat_goal_aff.y() << " " << quat_goal_aff.z() << " " << " " << quat_goal_aff.z() << " " << std::endl;
+        std::cout << "Goal Quaternion is:" << quat_goal_aff.x() << " " << quat_goal_aff.y() << " " << quat_goal_aff.z() << " "
+                  << " " << quat_goal_aff.z() << " " << std::endl;
+
+        ROS_INFO("Goal Pose is: %f, %f, %f, %f, %f, %f, %f",
+                 this->goal_pose.position.x,
+                 this->goal_pose.position.y,
+                 this->goal_pose.position.z,
+                 this->goal_pose.orientation.x,
+                 this->goal_pose.orientation.y,
+                 this->goal_pose.orientation.z,
+                 this->goal_pose.orientation.w);
 
         // Visual tools
         namespace rvt = rviz_visual_tools;
@@ -143,54 +147,37 @@ namespace SlerpPlanDisplacement
         visual_tools.loadRemoteControl();
         visual_tools.trigger();
 
-        // Calling the waypoint creator with start and goal poses
-        std::vector<geometry_msgs::Pose> cart_waypoints;
-        this->computeWaypointsFromPoses(this->startAff, this->goalAff, cart_waypoints);
-
-        // Scale the velocity and acceleration of the computed trajectory
-        const double velocity_scaling_factor = 0.5;     // Set your desired velocity scaling factor
-        const double acceleration_scaling_factor = 0.2; // Set your desired acceleration scaling factor
-
-        // Planning for the waypoints path
-        moveit_msgs::RobotTrajectory trajectory;
-        double fraction = group.computeCartesianPath(cart_waypoints, 0.01, 0.0, trajectory);
-
-        robot_trajectory::RobotTrajectory rt(start_state.getRobotModel(), this->planning_group);
-
-        rt.setRobotTrajectoryMsg(start_state, trajectory);
-        trajectory_processing::TimeOptimalTrajectoryGeneration totg;
-
-        bool success = totg.computeTimeStamps(rt, velocity_scaling_factor, acceleration_scaling_factor);
-        ROS_INFO("Computed time stamp %s", success ? "SUCCEDED" : "FAILED");
-        rt.getRobotTrajectoryMsg(trajectory);
+        //
+        // Plan the trajectory
+        moveit::planning_interface::MoveGroupInterface::Plan plan;
+        moveit::core::MoveItErrorCode planning_result = group.plan(plan);
 
         //
-        ROS_INFO("Visualizing the computed plan as trajectory line.");
-        visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
-        visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::LIME_GREEN);
-        visual_tools.trigger();
-        std::cout << "Pippo1" << std::endl;
-        complete_planning_msgs::SlerpPlanDisplacementResult result;
-        // If complete path is not achieved return false, true otherwise
-        if (fraction != 1.0)
+        complete_planning_msgs::CartesianPlanDisplacementResult result;
+        if (planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS)
         {
-            ROS_INFO("Plan (cartesian path) (%.2f%% acheived) is:", fraction * 100.0);
-            ROS_INFO("Fraction is less than one!");
-            ROS_INFO("Set Aborted!");
+#ifdef VISUAL
+            ROS_INFO("Visualizing the computed plan as trajectory line.");
+            visual_tools.deleteAllMarkers();
+            visual_tools.publishAxisLabeled(this->goal_pose, "goal pose");
+            visual_tools.publishTrajectoryLine(plan.trajectory_, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
+            visual_tools.trigger();
+#endif
+            //
+            result.planned_trajectory = plan.trajectory_;
+            gh.setSucceeded(result);
             _cancelGoals.erase(goal_id);
-            gh.setAborted(result);
-            return;
         }
         else
         {
-            ROS_INFO("Set succeeded!!");
-            result.planned_trajectory = trajectory;
+            ROS_INFO("Planning failed with error code: %d", planning_result.val);
+            gh.setAborted(result);
             _cancelGoals.erase(goal_id);
-            gh.setSucceeded(result);
+            return;
         }
     };
 
-    void SlerpPlanDisplacementActionServer::onCancel(GoalHandle gh)
+    void CartesianPlanDisplacementActionServer::onCancel(GoalHandle gh)
     {
         ROS_INFO("Cancel request has been received.");
         if (_cancelGoals.count(gh.getGoalID().id) > 0)
@@ -200,7 +187,7 @@ namespace SlerpPlanDisplacement
         }
     };
 
-    bool SlerpPlanDisplacementActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
+    bool CartesianPlanDisplacementActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
     {
         // Check if position and orientation arrays have 3 and 4 elements respectively
         return pose.position.x != 0.0 && pose.position.y != 0.0 && pose.position.z != 0.0 &&
@@ -208,7 +195,7 @@ namespace SlerpPlanDisplacement
                pose.orientation.w != 0.0;
     };
 
-    bool SlerpPlanDisplacementActionServer::isReallyNullPose(const geometry_msgs::Pose &pose)
+    bool CartesianPlanDisplacementActionServer::isReallyNullPose(const geometry_msgs::Pose &pose)
     {
         geometry_msgs::Point pos = pose.position;
         geometry_msgs::Quaternion quat = pose.orientation;
@@ -222,57 +209,7 @@ namespace SlerpPlanDisplacement
         return false;
     };
 
-    // Computes waypoints using SLERP from two poses
-    void SlerpPlanDisplacementActionServer::computeWaypointsFromPoses(const Eigen::Affine3d &start_pose, const Eigen::Affine3d &goal_pose, std::vector<geometry_msgs::Pose> &waypoints)
-    {
-
-        // Compute waypoints as linear interpolation (SLERP for rotations) between the two poses
-        Eigen::Affine3d wp_eigen;
-        geometry_msgs::Pose current_wp;
-
-        Eigen::Vector3d start_vec = start_pose.translation();
-        Eigen::Vector3d goal_vec = goal_pose.translation();
-        Eigen::Vector3d diff_vec = goal_vec - start_vec;
-
-        Eigen::Quaterniond start_quat(start_pose.linear());
-        Eigen::Quaterniond goal_quat(goal_pose.linear());
-        Eigen::Quaterniond diff_quat;
-
-        // distance between 2 quaternions
-        double dot_product = start_quat.dot(goal_quat);
-        double distance_quat = std::sqrt(1 - dot_product * dot_product);
-
-        // Setting the number of wp according to diff_vec and distance quat
-        std::cout << "n_wp.data is: "<< this->n_wp.data << std::endl;
-        ROS_WARN("The diff_vec norm is: %f", diff_vec.norm());
-        ROS_WARN("The distance_quat norm is: %f", distance_quat);
-
-        int real_n_wp = std::floor(std::max(diff_vec.norm(),distance_quat) * this->n_wp.data);
-        ROS_INFO_STREAM(" Real Num Waypoints: " << real_n_wp);
-        if (DEBUG)
-        {
-            ROS_INFO_STREAM("The norm of the diff_vec is " << diff_vec.norm() << ", so the new number of waypoints is " << real_n_wp << ".");
-        }
-        for (int j = 1; j <= real_n_wp; j++)
-        {
-            wp_eigen.translation() = start_vec + (diff_vec / real_n_wp) * j;
-            diff_quat = start_quat.slerp(double(j) / double(real_n_wp), goal_quat);
-            wp_eigen.linear() = diff_quat.toRotationMatrix();
-            tf::poseEigenToMsg(wp_eigen, current_wp);
-            waypoints.push_back(current_wp);
-
-            if (DEBUG)
-            {
-                std::cout << "WAYPOINT NUMBER " << j << "." << std::endl;
-                std::cout << "WP R: \n"
-                          << wp_eigen.linear() << std::endl;
-                std::cout << "WP t: \n"
-                          << wp_eigen.translation() << std::endl;
-            }
-        }
-    };
-
-    Eigen::Affine3d SlerpPlanDisplacementActionServer::convert_to_affine(geometry_msgs::Point &pos_disp, geometry_msgs::Point &angular_disp)
+    Eigen::Affine3d CartesianPlanDisplacementActionServer::convert_to_affine(geometry_msgs::Point &pos_disp, geometry_msgs::Point &angular_disp)
     {
         // Create Affine3d transformation
         Eigen::Affine3d affineTransformation = Eigen::Affine3d::Identity();

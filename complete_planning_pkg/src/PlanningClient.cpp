@@ -19,40 +19,11 @@ int main(int argc, char **argv)
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
-    // // Create instances of your action server classes
-    // CartesianPlanActionClient cartesian_plan_client(nh, "cartesian_plan_action");
-
-    // // Initialize arguments for the client
-    // geometry_msgs::Pose goal_pose;
-    // goal_pose.position.x = 0.5;
-    // goal_pose.position.y = 0.0;
-    // goal_pose.position.z = 0.2;
-
-    // goal_pose.orientation.x = 1.0;
-    // goal_pose.orientation.y = 0.0;
-    // goal_pose.orientation.z = 0.0;
-    // goal_pose.orientation.w = 0.0;
-
-    // // std::vector<double> initial_configuration{1.3, -0.7853981633974483, 0.0, -2.356194490192345, 0.0, 1.5707963267948966, 0.7853981633974483};
-    // std::vector<double> initial_configuration;
-
-    // std::string planning_group("panda_arm");
-
-    // // Send the goal to the action server
-    // ROS_INFO("Sending goal to CartesianPlan action server...");
-
-    // GoalHandle goal_handle1 = cartesian_plan_client.sendGoal(goal_pose, initial_configuration, planning_group);
-    // //                           // Spin to keep the node alive
-    // cartesian_plan_client._goalHandles[1] = &goal_handle1;
-    // // while (cartesian_plan_client._goalHandles[1]->getCommState().toString() != "DONE")
-    // // {
-    // //     ROS_INFO("Not finished yet");
-    // // }
-    // Create an Action client for the JointPlan action server
     actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction> joint_plan_client("joint_plan_action", true);
     actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction> slerp_plan_client("slerp_plan_action", true);
     actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanDisplacementAction> slerp_plan_displacement_client("slerp_plan_displacement_action", true);
     actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanAction> cartesian_plan_client("cartesian_plan_action", true);
+    actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanDisplacementAction> cartesian_plan_displacement_client("cartesian_plan_displacement_action", true);
 
     // Wait for the action server to start
     ROS_INFO("Waiting for JointPlan action server to start...");
@@ -63,68 +34,69 @@ int main(int argc, char **argv)
     cartesian_plan_client.waitForServer();
     ROS_INFO("Waiting for SlerpPlanDisplacement action server to start...");
     slerp_plan_displacement_client.waitForServer();
+    ROS_INFO("Waiting for CartesianPlanDisplacement action server to start...");
+    cartesian_plan_displacement_client.waitForServer();
 
     // Create a goal to send to the action server
     complete_planning_msgs::JointPlanGoal goal;
     complete_planning_msgs::SlerpPlanGoal slerp_goal;
     complete_planning_msgs::SlerpPlanDisplacementGoal slerp_displacement_goal;
+    complete_planning_msgs::CartesianPlanDisplacementGoal cartesian_displacement_goal;
     complete_planning_msgs::CartesianPlanGoal cartesian_goal;
 
     // Load goal configuration from the parameter server
     std::vector<double> pos_disp_vec;
-    if (!ros::param::get("/slerp_displacement_test_client/pos_disp", pos_disp_vec))
+    if (!ros::param::get("/cartesian_displacement_test_client/pos_disp", pos_disp_vec))
     {
         ROS_ERROR("Failed to load pos_disp parameter.");
         return 1;
     }
-    slerp_displacement_goal.pos_disp.x = pos_disp_vec.at(0);
-    slerp_displacement_goal.pos_disp.y = pos_disp_vec.at(1);
-    slerp_displacement_goal.pos_disp.z = pos_disp_vec.at(2);
+    cartesian_displacement_goal.pos_disp.x = pos_disp_vec.at(0);
+    cartesian_displacement_goal.pos_disp.y = pos_disp_vec.at(1);
+    cartesian_displacement_goal.pos_disp.z = pos_disp_vec.at(2);
 
     std::vector<double> angular_disp_vec;
-    if (!ros::param::get("/slerp_displacement_test_client/angular_disp", angular_disp_vec))
+    if (!ros::param::get("/cartesian_displacement_test_client/angular_disp", angular_disp_vec))
     {
         ROS_ERROR("Failed to load angular_disp parameter.");
         return 1;
     }
-    slerp_displacement_goal.angular_disp.x = angular_disp_vec.at(0);
-    slerp_displacement_goal.angular_disp.y = angular_disp_vec.at(1);
-    slerp_displacement_goal.angular_disp.z = angular_disp_vec.at(2);
+    cartesian_displacement_goal.angular_disp.x = angular_disp_vec.at(0);
+    cartesian_displacement_goal.angular_disp.y = angular_disp_vec.at(1);
+    cartesian_displacement_goal.angular_disp.z = angular_disp_vec.at(2);
 
     // Load planning group from the parameter server
-    if (!ros::param::get("/slerp_displacement_test_client/planning_group", slerp_displacement_goal.planning_group))
+    if (!ros::param::get("/cartesian_displacement_test_client/planning_group", cartesian_displacement_goal.planning_group))
     {
         ROS_ERROR("Failed to load planning_group parameter.");
         return 1;
     }
 
-    std_msgs::Int32 n_wps;
-    if (!ros::param::get("/slerp_displacement_test_client/number_of_waypoints", n_wps.data))
-    {
-        ROS_ERROR("Failed to load nwps parameter.");
-        return 1;
-    }
-    slerp_displacement_goal.number_of_waypoints = n_wps.data;
-
+    // std_msgs::Int32 n_wps;
+    // if (!ros::param::get("/cartesian_displacement_test_client/number_of_waypoints", n_wps.data))
+    // {
+    //     ROS_ERROR("Failed to load nwps parameter.");
+    //     return 1;
+    // }
+    // cartesian_displacement_goal.number_of_waypoints = n_wps.data;
 
     std::vector<double> initial_configuration;
-    if (!ros::param::get("/slerp_displacement_test_client/initial_configuration", slerp_displacement_goal.initial_configuration))
+    if (!ros::param::get("/cartesian_displacement_test_client/initial_configuration", cartesian_displacement_goal.initial_configuration))
     {
         ROS_ERROR("Failed to load initial_configuration parameter.");
         return 1;
     }
 
-
     // Send the goal to the action server
     ROS_INFO("Sending goal to SlerpDisplacementPlan action server...");
-    slerp_plan_displacement_client.sendGoal(slerp_displacement_goal);
+    cartesian_plan_displacement_client.sendGoal(cartesian_displacement_goal);
 
     // Wait for the action to complete (you can add a timeout here)
-    bool finished_before_timeout = slerp_plan_displacement_client.waitForResult();
+    bool finished_before_timeout = cartesian_plan_displacement_client.waitForResult();
 
     if (finished_before_timeout)
     {
-        actionlib::SimpleClientGoalState state = slerp_plan_displacement_client.getState();
+        actionlib::SimpleClientGoalState state = cartesian_plan_displacement_client.getState();
         ROS_INFO("SlerpPlan action finished: %s", state.toString().c_str());
     }
     else
