@@ -56,7 +56,7 @@ namespace CartesianPlanDisplacement
 
         // Getting the robot joint model
         const robot_state::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(this->planning_group);
-        robot_state::RobotState start_state(*group.getCurrentState());
+        // robot_state::RobotState start_state(*group.getCurrentState());
         auto joint_names = group.getVariableNames();
 
         // Convert the Displacement into Eigen Affine3d
@@ -77,6 +77,9 @@ namespace CartesianPlanDisplacement
                 moveit::core::RobotStatePtr current_state = group.getCurrentState();
                 current_state->setJointGroupPositions(this->planning_group, this->initial_configuration);
                 group.setStartState(*current_state);
+                this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
+                this->startAff = this->end_effector_state;
+                
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");

@@ -97,11 +97,11 @@ int main(int argc, char **argv)
     if (finished_before_timeout)
     {
         actionlib::SimpleClientGoalState state = cartesian_plan_displacement_client.getState();
-        ROS_INFO("SlerpPlan action finished: %s", state.toString().c_str());
+        ROS_INFO("CartesianPlanDisplacement action finished: %s", state.toString().c_str());
     }
     else
     {
-        ROS_ERROR("SlerpPlan action did not complete before the timeout.");
+        ROS_ERROR("CartesianPlanDisplacement action did not complete before the timeout.");
     }
     ros::waitForShutdown();
 

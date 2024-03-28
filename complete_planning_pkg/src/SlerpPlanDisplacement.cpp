@@ -126,13 +126,15 @@ namespace SlerpPlanDisplacement
         // this->startAff = this->startAff * this->DisplacementAff;
         Eigen::Quaterniond quat_start_aff(this->startAff.linear());
         std::cout << "Start Aff Translation: " << this->startAff.translation() << std::endl;
-        std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " " << " " << quat_start_aff.z() << " " << std::endl;
+        std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " "
+                  << " " << quat_start_aff.z() << " " << std::endl;
 
         this->goalAff = this->startAff * this->DisplacementAff;
 
         Eigen::Quaterniond quat_goal_aff(this->goalAff.linear());
         std::cout << "Goal Aff Translation: " << this->goalAff.translation() << std::endl;
-        std::cout << "Goal Quaternion is:" << quat_goal_aff.x() << " " << quat_goal_aff.y() << " " << quat_goal_aff.z() << " " << " " << quat_goal_aff.z() << " " << std::endl;
+        std::cout << "Goal Quaternion is:" << quat_goal_aff.x() << " " << quat_goal_aff.y() << " " << quat_goal_aff.z() << " "
+                  << " " << quat_goal_aff.z() << " " << std::endl;
 
         // Visual tools
         namespace rvt = rviz_visual_tools;
@@ -141,6 +143,10 @@ namespace SlerpPlanDisplacement
 
         // Loading the remote control for visual tools and promting a message
         visual_tools.loadRemoteControl();
+
+        Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
+        text_pose.translation().z() = 1.0;
+        visual_tools.publishText(text_pose, "Slerp Plan Displacement visualization", rvt::WHITE, rvt::XLARGE);
         visual_tools.trigger();
 
         // Calling the waypoint creator with start and goal poses
@@ -243,11 +249,11 @@ namespace SlerpPlanDisplacement
         double distance_quat = std::sqrt(1 - dot_product * dot_product);
 
         // Setting the number of wp according to diff_vec and distance quat
-        std::cout << "n_wp.data is: "<< this->n_wp.data << std::endl;
+        std::cout << "n_wp.data is: " << this->n_wp.data << std::endl;
         ROS_WARN("The diff_vec norm is: %f", diff_vec.norm());
         ROS_WARN("The distance_quat norm is: %f", distance_quat);
 
-        int real_n_wp = std::floor(std::max(diff_vec.norm(),distance_quat) * this->n_wp.data);
+        int real_n_wp = std::floor(std::max(diff_vec.norm(), distance_quat) * this->n_wp.data);
         ROS_INFO_STREAM(" Real Num Waypoints: " << real_n_wp);
         if (DEBUG)
         {
