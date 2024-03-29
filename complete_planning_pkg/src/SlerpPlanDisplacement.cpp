@@ -82,9 +82,7 @@ namespace SlerpPlanDisplacement
                 group.setStartState(*current_state);
                 this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
                 this->startAff = this->end_effector_state;
-                // this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
-                // this->goalAff = this->startAff * this->DisplacementAff;
-
+   
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");
@@ -109,9 +107,6 @@ namespace SlerpPlanDisplacement
             group.setStartStateToCurrentState();
             this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
             this->startAff = this->end_effector_state;
-            //
-            // this->goalAff = this->end_effector_state * this->DisplacementAff;
-            // this->startAff = this->end_effector_state * this->DisplacementAff;
 
             if (DEBUG)
             {
@@ -122,8 +117,6 @@ namespace SlerpPlanDisplacement
             }
         }
 
-        // If the goal is relative, get the global goal and start poses by multiplying it with ee pose (end_effector_state)
-        // this->startAff = this->startAff * this->DisplacementAff;
         Eigen::Quaterniond quat_start_aff(this->startAff.linear());
         std::cout << "Start Aff Translation: " << this->startAff.translation() << std::endl;
         std::cout << "Start Quaternion is:" << quat_start_aff.x() << " " << quat_start_aff.y() << " " << quat_start_aff.z() << " "
@@ -175,7 +168,6 @@ namespace SlerpPlanDisplacement
         visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
         visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::LIME_GREEN);
         visual_tools.trigger();
-        std::cout << "Pippo1" << std::endl;
         complete_planning_msgs::SlerpPlanDisplacementResult result;
         // If complete path is not achieved return false, true otherwise
         if (fraction != 1.0)

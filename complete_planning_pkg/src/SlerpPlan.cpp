@@ -141,12 +141,12 @@ namespace SlerpPlan
         ROS_INFO("Computed time stamp %s", success ? "SUCCEDED" : "FAILED");
         rt.getRobotTrajectoryMsg(trajectory);
 
-        #ifdef VISUAL
+#ifdef VISUAL
         ROS_INFO("Visualizing the computed plan as trajectory line.");
         visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
         visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
         visual_tools.trigger();
-        #endif
+#endif
 
         complete_planning_msgs::SlerpPlanResult result;
         // If complete path is not achieved return false, true otherwise
@@ -163,6 +163,11 @@ namespace SlerpPlan
         {
             ROS_INFO("Set succeeded!!");
             result.planned_trajectory = trajectory;
+#ifdef PROMPT
+            namespace rvt = rviz_visual_tools;
+            moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Slerp Plan");
+#endif
             _cancelGoals.erase(goal_id);
             gh.setSucceeded(result);
         }

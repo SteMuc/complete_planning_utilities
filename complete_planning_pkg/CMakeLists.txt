@@ -52,12 +52,18 @@ include_directories(
 ## Add your action server source files
 add_executable(planning_server src/CartesianPlan.cpp src/CartesianPlanDisplacement.cpp src/JointPlan.cpp src/SlerpPlan.cpp src/SlerpPlanDisplacement.cpp src/PlanningServer.cpp src/ExecutePlan.cpp)
 add_executable(planning_client src/PlanningClient.cpp)
+add_executable(task_planner src/CartesianPlan.cpp src/JointPlan.cpp src/SlerpPlan.cpp src/SlerpPlanDisplacement.cpp src/ExecutePlan.cpp src/task_handler.cpp src/task_planner_node.cpp)
+
 
 target_link_libraries(planning_server
   ${catkin_LIBRARIES}
 )
 
 target_link_libraries(planning_client
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(task_planner
   ${catkin_LIBRARIES}
 )
 
@@ -73,3 +79,4 @@ install(TARGETS planning_server planning_client
 
 add_dependencies(planning_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} complete_planning_msgs_generate_messages_cpp)
 add_dependencies(planning_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} complete_planning_msgs_generate_messages_cpp)
+add_dependencies(task_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} complete_planning_msgs_generate_messages_cpp)

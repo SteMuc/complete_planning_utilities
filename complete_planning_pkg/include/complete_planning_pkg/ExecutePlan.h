@@ -20,6 +20,8 @@
 #include <complete_planning_msgs/ExecutePlanFeedback.h>
 #include <Eigen/Dense>
 
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
 /**
  * @class ExecutePlanActionServer
  * @brief Class for executing a plan using an action server.

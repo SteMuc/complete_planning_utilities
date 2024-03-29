@@ -150,7 +150,6 @@ namespace CartesianPlanDisplacement
         visual_tools.loadRemoteControl();
         visual_tools.trigger();
 
-        //
         // Plan the trajectory
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         moveit::core::MoveItErrorCode planning_result = group.plan(plan);

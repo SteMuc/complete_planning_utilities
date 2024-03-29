@@ -1,0 +1,36 @@
+tasks:
+  - type: "CartesianPlan"
+    goal:
+      position:
+        x: 0.4
+        y: 0.1
+        z: 0.4
+      orientation:
+        x: 0.0
+        y: 1.0
+        z: 0.0
+        w: 0.0
+    merge: false
+    group: "panda_arm"
+
+  - type: "JointPlan"
+    goal: [0.17487751478777983, -1.2211202568068131, 0.41834634694816447, -2.4381058886000555, 0.4108761315889708, 1.2724048530962113, 1.238913433831517]
+    merge: false
+    group: "panda_arm"
+
+  - type: "SlerpPlan"
+    goal:
+      position:
+        x: 0.4
+        y: 0.205
+        z: 0.5
+      orientation:
+        x: 0.924
+        y: -0.383
+        z: 0.0
+        w: 0.0
+    number_of_waypoints: 10 
+    merge: false
+    group: "panda_arm"
+
+  

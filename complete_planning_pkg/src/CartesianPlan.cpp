@@ -119,17 +119,24 @@ namespace CartesianPlan
         //
         complete_planning_msgs::CartesianPlanResult result;
         if (planning_result == moveit::planning_interface::MoveItErrorCode::SUCCESS)
-        {   
-            #ifdef VISUAL
+        {
+#ifdef VISUAL
             ROS_INFO("Visualizing the computed plan as trajectory line.");
             visual_tools.deleteAllMarkers();
             visual_tools.publishAxisLabeled(this->goal_pose, "goal pose");
             visual_tools.publishTrajectoryLine(plan.trajectory_, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
             visual_tools.trigger();
-            #endif
+#endif
             //
             result.planned_trajectory = plan.trajectory_;
+
+#ifdef PROMPT
+            namespace rvt = rviz_visual_tools;
+            moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Joint Plan");
+#endif
             gh.setSucceeded(result);
+            ROS_INFO("Set Succeeded");
             _cancelGoals.erase(goal_id);
         }
         else

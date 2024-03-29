@@ -1,0 +1,4 @@
+<launch>
+    <!-- Launch the planning server node -->
+    <node name="motion_planning_server_node" pkg="complete_planning_pkg" type="planning_server" output="screen" />
+</launch>

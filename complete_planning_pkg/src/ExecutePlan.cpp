@@ -18,7 +18,7 @@ namespace ExecutePlan
     void ExecutePlanActionServer::onGoal(GoalHandle gh)
     {
         boost::shared_ptr<const complete_planning_msgs::ExecutePlanGoal> goal = gh.getGoal();
-        
+
         // Accept the goal
         gh.setAccepted();
         std::string move_group_name = goal->move_group_name;
