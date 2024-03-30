@@ -133,7 +133,7 @@ namespace CartesianPlan
 #ifdef PROMPT
             namespace rvt = rviz_visual_tools;
             moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
-            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Joint Plan");
+            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Cartesian Plan");
 #endif
             gh.setSucceeded(result);
             ROS_INFO("Set Succeeded");

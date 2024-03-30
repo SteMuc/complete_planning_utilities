@@ -24,8 +24,8 @@ namespace CartesianPlanDisplacement
         std::string goal_id = gh.getGoalID().id;
 
         // Initialize Slerp Displacement goal
-        this->pos_disp = goal->pos_disp;
-        this->angular_disp = goal->angular_disp;
+        this->pos_disp = goal->displacement.pos_disp;
+        this->angular_disp = goal->displacement.angular_disp;
         this->planning_group = goal->planning_group;
         this->initial_configuration = goal->initial_configuration;
 
@@ -79,7 +79,7 @@ namespace CartesianPlanDisplacement
                 group.setStartState(*current_state);
                 this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
                 this->startAff = this->end_effector_state;
-                
+
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");
@@ -167,6 +167,11 @@ namespace CartesianPlanDisplacement
 #endif
             //
             result.planned_trajectory = plan.trajectory_;
+#ifdef PROMPT
+            namespace rvt = rviz_visual_tools;
+            moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Cartesian Displacement Plan");
+#endif
             gh.setSucceeded(result);
             _cancelGoals.erase(goal_id);
         }

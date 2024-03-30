@@ -5,6 +5,7 @@ TaskHandler::TaskHandler(ros::NodeHandle &nh)
       is_executing_(false),
       last_planned_configuration_(nullptr),
       cartesian_client_(new actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanAction>("cartesian_plan_action", true)),
+      cartesian_displacement_client_(new actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanDisplacementAction>("cartesian_plan_displacement_action", true)),
       joint_client_(new actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction>("joint_plan_action", true)),
       slerp_client_(new actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction>("slerp_plan_action", true)),
       execute_client_(new actionlib::SimpleActionClient<complete_planning_msgs::ExecutePlanAction>("execute_plan_action", true))
@@ -37,6 +38,18 @@ geometry_msgs::Pose TaskHandler::parsePose(const XmlRpc::XmlRpcValue &pose_param
     pose.orientation.z = static_cast<double>(pose_param["orientation"]["z"]);
     pose.orientation.w = static_cast<double>(pose_param["orientation"]["w"]);
     return pose;
+}
+
+complete_planning_msgs::displacement TaskHandler::parsePoint(const XmlRpc::XmlRpcValue &pose_param)
+{
+    complete_planning_msgs::displacement disp_msg;
+    disp_msg.pos_disp.x = static_cast<double>(pose_param["position_displacement"]["x"]);
+    disp_msg.pos_disp.y = static_cast<double>(pose_param["position_displacement"]["y"]);
+    disp_msg.pos_disp.z = static_cast<double>(pose_param["position_displacement"]["z"]);
+    disp_msg.angular_disp.x = static_cast<double>(pose_param["angular_displacement"]["x"]);
+    disp_msg.angular_disp.y = static_cast<double>(pose_param["angular_displacement"]["y"]);
+    disp_msg.angular_disp.z = static_cast<double>(pose_param["angular_displacement"]["z"]);
+    return disp_msg;
 }
 
 PlanningGoal TaskHandler::convertYamlToGoal(const XmlRpc::XmlRpcValue &task_param)
@@ -227,6 +240,62 @@ PlanningGoal TaskHandler::convertYamlToGoal(const XmlRpc::XmlRpcValue &task_para
             }
             return slerp_goal;
         }
+        else if (task_type == "CartesianDisplacementPlan")
+        {
+            complete_planning_msgs::CartesianPlanDisplacementGoal cartesian_displacement_goal;
+
+            if (task_param.hasMember("goal"))
+            {   
+                cartesian_displacement_goal.displacement = parsePoint(task_param["goal"]);
+            }
+            else
+            {
+                ROS_ERROR("No displacement specified!");
+                return std::monostate{}; // Return an empty variant in case of an error
+            }
+
+            if (task_param.hasMember("group"))
+            {
+                cartesian_displacement_goal.planning_group = static_cast<std::string>(task_param["group"]);
+            }
+            else
+            {
+                ROS_ERROR("No group specified!");
+                return std::monostate{}; // Return an empty variant in case of an error
+            }
+
+            if (task_param.hasMember("merge") && task_param["merge"].getType() == XmlRpc::XmlRpcValue::TypeBoolean)
+            {
+                if (static_cast<bool>(task_param["merge"]))
+                {
+                    if (last_planned_configuration_)
+                    {
+                        std::cout << (*last_planned_configuration_).first << std::endl;
+                        std::cout << cartesian_displacement_goal.planning_group << std::endl;
+
+                        if ((*last_planned_configuration_).first == cartesian_displacement_goal.planning_group)
+                        {
+                            cartesian_displacement_goal.initial_configuration = (*last_planned_configuration_).second; // Use the shared vector
+                        }
+                        else
+                        {
+                            waitForExecutions();
+                        }
+                    }
+                    else
+                    {
+                        ROS_ERROR("No previous configuration available for merge.");
+                        return std::monostate{}; // Return an empty variant in case of an error
+                    }
+                }
+                else
+                {
+                    waitForExecutions();
+                }
+            }
+
+            return cartesian_displacement_goal;
+        }
     }
 
     ROS_ERROR("Wrong task parameters!");
@@ -337,6 +406,36 @@ bool TaskHandler::plan(const PlanningGoal &goal)
         else
         {
             ROS_ERROR("Joint plan failed.");
+            return false;
+        }
+    }
+    else if (std::holds_alternative<complete_planning_msgs::CartesianPlanDisplacementGoal>(goal))
+    {
+        complete_planning_msgs::CartesianPlanDisplacementGoal cartesian_displacement_goal = std::get<complete_planning_msgs::CartesianPlanDisplacementGoal>(goal);
+        cartesian_displacement_client_->sendGoal(cartesian_displacement_goal);
+        cartesian_displacement_client_->waitForResult();
+
+        if (cartesian_displacement_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+        {
+            ROS_INFO("Slerp plan succeeded.");
+            complete_planning_msgs::CartesianPlanDisplacementResultConstPtr plan_result = cartesian_displacement_client_->getResult();
+            trajectory_msgs::JointTrajectory planned_joint_traj =
+                plan_result->planned_trajectory.joint_trajectory;
+            std::pair<std::string, std::vector<double>> last_planned_configuration;
+            last_planned_configuration.first = cartesian_displacement_goal.planning_group;
+            last_planned_configuration.second =
+                planned_joint_traj.points.back().positions;
+            last_planned_configuration_ =
+                std::make_unique<std::pair<std::string, std::vector<double>>>(
+                    last_planned_configuration);
+            complete_planning_msgs::ExecutePlanGoal execute_goal;
+            execute_goal.motion_plan = plan_result->planned_trajectory;
+            execute_goal.move_group_name = cartesian_displacement_goal.planning_group;
+            execute_goal_queue.push(execute_goal);
+        }
+        else
+        {
+            ROS_ERROR("Cartesian Displacement plan failed.");
             return false;
         }
     }

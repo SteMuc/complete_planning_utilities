@@ -33,4 +33,17 @@ tasks:
     merge: false
     group: "panda_arm"
 
+  - type: "CartesianDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.1
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x: -0.2 # Roll 
+        y:  0.0 # Pitch
+        z:  0.0 # Yaw
+    merge: true
+    group: "panda_arm"
+
   

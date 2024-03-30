@@ -16,7 +16,7 @@
 #include <chrono>
 
 // Define a variant type for task parameters
-using PlanningGoal = std::variant<std::monostate, complete_planning_msgs::CartesianPlanGoal, complete_planning_msgs::JointPlanGoal, complete_planning_msgs::SlerpPlanGoal>;
+using PlanningGoal = std::variant<std::monostate, complete_planning_msgs::CartesianPlanGoal, complete_planning_msgs::JointPlanGoal, complete_planning_msgs::SlerpPlanGoal, complete_planning_msgs::CartesianPlanDisplacementGoal>;
 /**
  * @brief TaskHandler class for handling task execution using ROS action clients.
  *
@@ -25,20 +25,20 @@ using PlanningGoal = std::variant<std::monostate, complete_planning_msgs::Cartes
  *
  * @author Alessandro Palleschi
  */
-class TaskHandler {
+class TaskHandler
+{
 public:
     /**
      * @brief Constructor for TaskHandler.
      *
      * @param nh Reference to the ROS NodeHandle.
      */
-    TaskHandler(ros::NodeHandle& nh);
+    TaskHandler(ros::NodeHandle &nh);
 
     /**
      * @brief Destructor for TaskHandler, joins the execution thread.
      */
     ~TaskHandler();
-
 
     /**
      * @brief Convert YAML data to a task parameter variant.
@@ -46,7 +46,7 @@ public:
      * @param task_param XML-RPC data containing task parameters.
      * @return PlanningGoal variant representing the task goal.
      */
-    PlanningGoal convertYamlToGoal(const XmlRpc::XmlRpcValue& task_param);
+    PlanningGoal convertYamlToGoal(const XmlRpc::XmlRpcValue &task_param);
 
     /**
      * @brief Plan and execute a task based on the provided goal.
@@ -54,7 +54,7 @@ public:
      * @param goal Task parameters as a variant type.
      * @return True if the task planning and execution were successful, false otherwise.
      */
-    bool plan(const PlanningGoal& goal);
+    bool plan(const PlanningGoal &goal);
 
     /**
      * @brief Stop the execution thread gracefully.
@@ -67,14 +67,22 @@ public:
      * @return True if the execution queue is empty, false otherwise.
      */
     bool isExecutionQueueEmpty();
-    
+
     /**
      * @brief Parse a Pose from XML-RPC data.
      *
      * @param pose_param XML-RPC data containing pose information.
      * @return Parsed geometry_msgs::Pose.
      */
-    geometry_msgs::Pose parsePose(const XmlRpc::XmlRpcValue& pose_param);
+    geometry_msgs::Pose parsePose(const XmlRpc::XmlRpcValue &pose_param);
+
+    /**
+     * @brief Parse a complete_planning_msgs::displacement from XML-RPC data.
+     *
+     * @param pose_param XML-RPC data containing point information.
+     * @return Parsed complete_planning_msgs::displacement.
+     */
+    complete_planning_msgs::displacement parsePoint(const XmlRpc::XmlRpcValue &pose_param);
 
     /**
      * @brief Check if the execution thread is running.
@@ -86,11 +94,12 @@ public:
     void waitForExecutions();
 
 private:
-    ros::NodeHandle& nh_;
+    ros::NodeHandle &nh_;
     bool is_executing_;
     bool run_thread = true;
     std::queue<complete_planning_msgs::ExecutePlanGoal> execute_goal_queue;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanAction>> cartesian_client_;
+    std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanDisplacementAction>> cartesian_displacement_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction>> joint_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction>> slerp_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::ExecutePlanAction>> execute_client_;
