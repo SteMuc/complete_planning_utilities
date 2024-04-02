@@ -19,7 +19,7 @@ namespace CartesianPlanDisplacement
     {
         ROS_INFO("Received new Slerp Goal!");
         _cancelGoals[gh.getGoalID().id] = false;
-
+        
         boost::shared_ptr<const complete_planning_msgs::CartesianPlanDisplacementGoal> goal = gh.getGoal();
         std::string goal_id = gh.getGoalID().id;
 

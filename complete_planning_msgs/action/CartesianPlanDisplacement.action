@@ -1,6 +1,4 @@
 # goal
-# geometry_msgs/Point pos_disp
-# geometry_msgs/Point angular_disp  
 complete_planning_msgs/displacement displacement
 float64[] initial_configuration
 string planning_group

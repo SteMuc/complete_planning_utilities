@@ -24,8 +24,8 @@ namespace SlerpPlanDisplacement
         std::string goal_id = gh.getGoalID().id;
 
         // Initialize Slerp Displacement goal
-        this->pos_disp = goal->pos_disp;
-        this->angular_disp = goal->angular_disp;
+        this->pos_disp = goal->displacement.pos_disp;
+        this->angular_disp = goal->displacement.angular_disp;
         this->planning_group = goal->planning_group;
         this->initial_configuration = goal->initial_configuration;
         this->n_wp.data = goal->number_of_waypoints;
@@ -82,7 +82,7 @@ namespace SlerpPlanDisplacement
                 group.setStartState(*current_state);
                 this->end_effector_state = current_state->getGlobalLinkTransform(group.getEndEffectorLink());
                 this->startAff = this->end_effector_state;
-   
+
                 if (DEBUG)
                 {
                     ROS_WARN("Setting initial Position externally");
@@ -136,10 +136,6 @@ namespace SlerpPlanDisplacement
 
         // Loading the remote control for visual tools and promting a message
         visual_tools.loadRemoteControl();
-
-        Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
-        text_pose.translation().z() = 1.0;
-        visual_tools.publishText(text_pose, "Slerp Plan Displacement visualization", rvt::WHITE, rvt::XLARGE);
         visual_tools.trigger();
 
         // Calling the waypoint creator with start and goal poses
@@ -163,6 +159,13 @@ namespace SlerpPlanDisplacement
         ROS_INFO("Computed time stamp %s", success ? "SUCCEDED" : "FAILED");
         rt.getRobotTrajectoryMsg(trajectory);
 
+#ifdef VISUAL
+        ROS_INFO("Visualizing the computed plan as trajectory line.");
+        visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
+        visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(group.getEndEffectorLink()), joint_model_group, rvt::YELLOW);
+        visual_tools.trigger();
+#endif
+
         //
         ROS_INFO("Visualizing the computed plan as trajectory line.");
         visual_tools.publishAxisLabeled(cart_waypoints.back(), "goal pose");
@@ -183,6 +186,11 @@ namespace SlerpPlanDisplacement
         {
             ROS_INFO("Set succeeded!!");
             result.planned_trajectory = trajectory;
+#ifdef PROMPT
+            namespace rvt = rviz_visual_tools;
+            moveit_visual_tools::MoveItVisualTools visual_tools(group.getRobotModel()->getModelFrame());
+            visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue and execute the Slerp Plan Displacement");
+#endif
             _cancelGoals.erase(goal_id);
             gh.setSucceeded(result);
         }

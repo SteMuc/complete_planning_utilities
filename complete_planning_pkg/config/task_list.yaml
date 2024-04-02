@@ -46,4 +46,18 @@ tasks:
     merge: true
     group: "panda_arm"
 
+  - type: "SlerpDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.2
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x:  0.0 # Roll 
+        y:  0.0 # Pitch
+        z:  0.2 # Yaw
+    number_of_waypoints: 10
+    merge: true
+    group: "panda_arm"
+
   

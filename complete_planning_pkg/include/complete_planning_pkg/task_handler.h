@@ -16,7 +16,7 @@
 #include <chrono>
 
 // Define a variant type for task parameters
-using PlanningGoal = std::variant<std::monostate, complete_planning_msgs::CartesianPlanGoal, complete_planning_msgs::JointPlanGoal, complete_planning_msgs::SlerpPlanGoal, complete_planning_msgs::CartesianPlanDisplacementGoal>;
+using PlanningGoal = std::variant<std::monostate, complete_planning_msgs::CartesianPlanGoal, complete_planning_msgs::JointPlanGoal, complete_planning_msgs::SlerpPlanGoal, complete_planning_msgs::CartesianPlanDisplacementGoal, complete_planning_msgs::SlerpPlanDisplacementGoal>;
 /**
  * @brief TaskHandler class for handling task execution using ROS action clients.
  *
@@ -100,6 +100,7 @@ private:
     std::queue<complete_planning_msgs::ExecutePlanGoal> execute_goal_queue;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanAction>> cartesian_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::CartesianPlanDisplacementAction>> cartesian_displacement_client_;
+    std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanDisplacementAction>> slerp_displacement_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::JointPlanAction>> joint_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::SlerpPlanAction>> slerp_client_;
     std::shared_ptr<actionlib::SimpleActionClient<complete_planning_msgs::ExecutePlanAction>> execute_client_;
