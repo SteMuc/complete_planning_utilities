@@ -1,0 +1,69 @@
+tasks:
+  - type: "CartesianPlan"
+    goal:
+      position:
+        x: 0.6
+        y: 0.3
+        z: 0.5
+      orientation:
+        x: 0.889
+        y: -0.450
+        z: 0.030
+        w: -0.082
+    merge: false
+    group: "ur_manipulator"
+
+  - type: "JointPlan"
+    goal:
+      [
+        -0.14067440698376696,
+        -1.406546970628371,
+        1.5597085354165805,
+        -1.8353037691857144,
+        -1.4351276070746248,
+        -0.7664106135506862,
+      ]
+    merge: true
+    group: "ur_manipulator"
+
+  - type: "SlerpPlan"
+    goal:
+      position:
+        x: 0.7
+        y: 0.1
+        z: 0.4
+      orientation:
+        x: 0.889
+        y: -0.450
+        z: 0.030
+        w: -0.082
+    number_of_waypoints: 10
+    merge: false
+    group: "ur_manipulator"
+
+  - type: "CartesianDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.1
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x: -0.2 # Roll
+        y: 0.0 # Pitch
+        z: 0.0 # Yaw
+    merge: true
+    group: "ur_manipulator"
+
+  - type: "SlerpDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.2
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x: 0.0 # Roll
+        y: 0.0 # Pitch
+        z: 0.2 # Yaw
+    number_of_waypoints: 10
+    merge: true
+    group: "ur_manipulator"

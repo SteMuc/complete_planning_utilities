@@ -28,6 +28,15 @@ namespace CartesianPlan
         this->goal_pose = goal->goal_pose;
         this->initial_configuration = goal->initial_configuration;
         this->planning_group = goal->planning_group;
+        
+                    ROS_INFO("Goal Pose is: %f, %f, %f, %f, %f, %f, %f",
+                     this->goal_pose.position.x,
+                     this->goal_pose.position.y,
+                     this->goal_pose.position.z,
+                     this->goal_pose.orientation.x,
+                     this->goal_pose.orientation.y,
+                     this->goal_pose.orientation.z,
+                     this->goal_pose.orientation.w);
 
         if (this->isPoseFilled(this->goal_pose))
         {
@@ -161,8 +170,8 @@ namespace CartesianPlan
     bool CartesianPlanActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
     {
         // Check if position and orientation arrays have 3 and 4 elements respectively
-        return pose.position.x != 0.0 && pose.position.y != 0.0 && pose.position.z != 0.0 &&
-               pose.orientation.x != 0.0 && pose.orientation.y != 0.0 && pose.orientation.z != 0.0 &&
-               pose.orientation.w != 0.0;
+        return pose.position.x == 0.0 && pose.position.y == 0.0 && pose.position.z == 0.0 &&
+               pose.orientation.x == 0.0 && pose.orientation.y == 0.0 && pose.orientation.z == 0.0 &&
+               pose.orientation.w == 0.0;
     };
 }

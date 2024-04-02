@@ -186,9 +186,9 @@ namespace SlerpPlan
     bool SlerpPlanActionServer::isPoseFilled(const geometry_msgs::Pose &pose)
     {
         // Check if position and orientation arrays have 3 and 4 elements respectively
-        return pose.position.x != 0.0 && pose.position.y != 0.0 && pose.position.z != 0.0 &&
-               pose.orientation.x != 0.0 && pose.orientation.y != 0.0 && pose.orientation.z != 0.0 &&
-               pose.orientation.w != 0.0;
+        return pose.position.x == 0.0 && pose.position.y == 0.0 && pose.position.z == 0.0 &&
+               pose.orientation.x == 0.0 && pose.orientation.y == 0.0 && pose.orientation.z == 0.0 &&
+               pose.orientation.w == 0.0;
     };
 
     bool SlerpPlanActionServer::isReallyNullPose(const geometry_msgs::Pose &pose)

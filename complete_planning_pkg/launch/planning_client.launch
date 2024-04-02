@@ -1,5 +1,6 @@
 <launch>
     <!-- Load parameters from the YAML file -->
-    <rosparam file="$(find complete_planning_pkg)/config/task_list.yaml" command="load" />
+    <!-- <rosparam file="$(find complete_planning_pkg)/config/task_list_franka.yaml" command="load" /> -->
+    <rosparam file="$(find complete_planning_pkg)/config/task_list_ur10e.yaml" command="load" />
     <node name="task_planner_node" pkg="complete_planning_pkg" type="task_planner" output="screen" />
 </launch>
