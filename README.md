@@ -66,24 +66,66 @@ Below is a guide on how to build a YAML task file:
 
 ```yaml
 tasks:
-  - type: "CartesianPlan"  # Task type: Cartesian planning
+  - type: "CartesianPlan"
     goal:
       position:
-        x: 0.4            # Desired X-coordinate
-        y: 0.1            # Desired Y-coordinate
-        z: 0.4            # Desired Z-coordinate
+        x: 0.4
+        y: 0.1
+        z: 0.4
       orientation:
-        x: 0.0            # Desired X orientation
-        y: 1.0            # Desired Y orientation
-        z: 0.0            # Desired Z orientation
-        w: 0.0            # Desired W orientation
-    merge: false          # Whether to merge the new plan with the previous one
-    group: "panda_arm"    # Planning group to use
+        x: 0.0
+        y: 1.0
+        z: 0.0
+        w: 0.0
+    merge: false
+    group: "panda_arm"
 
-  - type: "JointPlan"     # Task type: Joint planning
-    goal: [-1.0, -1.0, 0.0, 1.57, 1.3, 1.57, 0.0]  # Desired joint configuration
-    merge: false          # Whether to merge the new plan with the previous one
-    group: "panda_arm"    # Planning group to use
+  - type: "JointPlan"
+    goal: [0.17487751478777983, -1.2211202568068131, 0.41834634694816447, -2.4381058886000555, 0.4108761315889708, 1.2724048530962113, 1.238913433831517]
+    merge: false
+    group: "panda_arm"
+
+  - type: "SlerpPlan"
+    goal:
+      position:
+        x: 0.4
+        y: 0.205
+        z: 0.5
+      orientation:
+        x: 0.924
+        y: -0.383
+        z: 0.0
+        w: 0.0
+    number_of_waypoints: 10 
+    merge: false
+    group: "panda_arm"
+
+  - type: "CartesianDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.1
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x: -0.2 # Roll 
+        y:  0.0 # Pitch
+        z:  0.0 # Yaw
+    merge: true
+    group: "panda_arm"
+
+  - type: "SlerpDisplacementPlan"
+    goal:
+      position_displacement:
+        x: 0.2
+        y: 0.0
+        z: 0.0
+      angular_displacement:
+        x:  0.0 # Roll 
+        y:  0.0 # Pitch
+        z:  0.2 # Yaw
+    number_of_waypoints: 10
+    merge: true
+    group: "panda_arm"
 
 # Continue with more tasks...
 ```
