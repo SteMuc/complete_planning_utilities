@@ -1,18 +1,18 @@
 Initial version of the planning_utilities for controlling robotic manipulators at Research Center "Enrico Piaggio" using MoveIt.
 
-# planning_utilities - ROS Metapackage
+# complete_planning_utilities - ROS Metapackage
 
-The `planning_utilities` metapackage is a comprehensive suite of tools and ROS nodes designed to streamline robotic path planning and execution tasks. It offers various planning actions and provides a convenient way to manage and execute tasks involving Cartesian planning, joint planning, and plan execution.
+The `complete_planning_utilities` metapackage is a comprehensive suite of tools and ROS nodes designed to streamline robotic path planning and execution tasks. It offers various planning actions and provides a convenient way to manage and execute tasks involving Cartesian planning, joint planning, and plan execution.
 
 ## Overview
 
-In the field of robotics, path planning and execution are essential for enabling robots to perform tasks accurately and safely. The `planning_utilities` metapackage simplifies these tasks by providing a collection of tools and ROS nodes that facilitate the entire process.
+In the field of robotics, path planning and execution are essential for enabling robots to perform tasks accurately and safely. The `complete_planning_utilities` metapackage simplifies these tasks by providing a collection of tools and ROS nodes that facilitate the entire process.
 
 ## Packages
 
-### 1. `planning_pkg`
+### 1. `complete_planning_pkg`
 
-The `planning_pkg` package, a crucial component of the `planning_utilities` metapackage, contains several ROS action servers and task execution functionalities. Here are the key functionalities offered by the `planning_pkg` package:
+The `complete_planning_pkg` package, a crucial component of the `complete_planning_utilities` metapackage, contains several ROS action servers and task execution functionalities. Here are the key functionalities offered by the `complete_planning_pkg` package:
 
 #### a. Action Servers
    - **`CartesianPlanActionServer`**: This class serves as a base for a Cartesian Plan Action Server. It handles Cartesian path planning goals, manages trajectories, and plans them for specified planning groups.
@@ -30,15 +30,15 @@ The `planning_pkg` package, a crucial component of the `planning_utilities` meta
 #### b. Task Handler
    - The `TaskHandler` class is designed to handle task execution using ROS action clients. It provides functionalities to plan and execute tasks based on specified goals. Tasks can involve both Cartesian and joint planning goals.
 
-### 2. `planning_msgs`
+### 2. `complete_planning_msgs`
 
-The `planning_msgs` package defines custom ROS action and message types used by the action servers and other components in the `planning_utilities` metapackage. These message types facilitate the communication of planning goals and results between nodes.
+The `complete_planning_msgs` package defines custom ROS action and message types used by the action servers and other components in the `complete_planning_utilities` metapackage. These message types facilitate the communication of planning goals and results between nodes.
 
 ## Usage
 
-To use the `planning_utilities` metapackage in your ROS environment, follow these steps:
+To use the `complete_planning_utilities` metapackage in your ROS environment, follow these steps:
 
-1. **Clone the Package**: Clone the `planning_utilities` package to your ROS workspace.
+1. **Clone the Package**: Clone the `complete_planning_utilities` package to your ROS workspace.
 
 2. **Build the Package**: Use `catkin_make` to build the package within your workspace.
 
@@ -53,7 +53,7 @@ To use the `planning_utilities` metapackage in your ROS environment, follow thes
 To plan and execute a sequence of tasks using the `task_planner_node`, you need to create a YAML task file. Each task in the file represents a specific motion planning goal, which can be either Cartesian planning or joint planning. 
 Each task entry contains the following components:
 
-1. **type**: Specifies the type of the planning task, which can be either "CartesianPlan" or "JointPlan."
+1. **type**: Specifies the type of the planning task (one belong to the list specified above)
 
 2. **goal**: Depending on the task type, define the planning goal, including the desired position and orientation for Cartesian planning or a list of joint angles for joint planning.
 
