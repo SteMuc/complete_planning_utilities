@@ -19,7 +19,7 @@ The `planning_pkg` package, a crucial component of the `planning_utilities` meta
 
    - **`CartesianPlanDisplacementActionServer`**: This class serves as a base for a Cartesian Plan Displacement Action Server. It handles Cartesian displacement path planning goals, manages trajectories, and plans them for specified planning groups.
 
-   - **`SlerpPlanActionServer`**: This class serves as a base for a SLERP Plan Action Server. It handles SLERP path planning goals between end-effector and goal pose to create homogeneous motion.
+   - **`SlerpPlanActionServer`**: This class serves as a base for a SLERP Plan Action Server. It handles SLERP path planning goals between end-effector and goal pose to create homogeneous motion. [Slerp]([https://github.com/frankaemika/franka_ros.git](https://it.wikipedia.org/wiki/Slerp))
 
    - **`SlerpPlanDisplacementActionServer`**: This class serves as a base for a SLERP Plan Displacement Action Server.It handles SLERP displacement path planning goals between end-effector and goal pose to create homogeneous motion.
 
