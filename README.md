@@ -17,6 +17,8 @@ The `planning_pkg` package, a crucial component of the `planning_utilities` meta
 #### a. Action Servers
    - **`CartesianPlanActionServer`**: This class serves as a base for a Cartesian Plan Action Server. It handles Cartesian path planning goals, manages trajectories, and plans them for specified planning groups.
 
+   - **`CartesianPlanDisplacementActionServer`**: This class serves as a base for a Cartesian Plan Displacement Action Server. It handles Cartesian displacement path planning goals, manages trajectories, and plans them for specified planning groups.
+
    - **`JointPlanActionServer`**: Similar to `CartesianPlanActionServer`, this class serves as a base for a Joint Plan Action Server. It handles joint path planning goals, manages joint configurations, and plans them for specified planning groups.
 
    - **`ExecutePlanActionServer`**: This class enables the execution of planned trajectories using an action server. It manages the execution of motion plans and provides callback functions for goal completion.
